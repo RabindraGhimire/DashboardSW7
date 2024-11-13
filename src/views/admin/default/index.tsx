@@ -56,7 +56,7 @@ export default function UserReports() {
 						/>
 					}
 					name='Earnings'
-					value='$350.4'
+					value='350 Dkk'
 				/>
 				<MiniStatistics
 					startContent={
@@ -68,24 +68,24 @@ export default function UserReports() {
 						/>
 					}
 					name='Spend this month'
-					value='$642.39'
+					value='642.39 Dkk'
 				/>
-				<MiniStatistics growth='+23%' name='Sales' value='$574.34' />
+				<MiniStatistics growth='+23%' name='Sales' value='575 DKK' />
 				<MiniStatistics
 					endContent={
 						<Flex me='-16px' mt='10px'>
 							<FormLabel htmlFor='balance'>
 								<Avatar src={Usa} />
 							</FormLabel>
-							{/* <Select id='balance' variant='mini' mt='5px' me='0px' defaultValue='usd'>
+							<Select id='balance' variant='mini' mt='5px' me='0px' defaultValue='usd'>
 								<option value='usd'>USD</option>
 								<option value='eur'>EUR</option>
 								<option value='gba'>GBA</option>
-							</Select> */}
+							</Select>
 						</Flex>
 					}
 					name='Your balance'
-					value='$1,000'
+					value='1.000 Dkk'
 				/>
 				<MiniStatistics
 					startContent={

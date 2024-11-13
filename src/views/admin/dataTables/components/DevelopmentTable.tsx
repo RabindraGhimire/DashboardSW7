@@ -1,5 +1,5 @@
 import {
-	Box, Flex, Icon, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue
+	Box, Flex, Icon, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Button
 } from '@chakra-ui/react';
 import {
 	createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable
@@ -89,8 +89,18 @@ export default function ComplexTable(props: { tableData: RowObj[], onProductClic
 				<Text color={textColor} fontSize='22px' fontWeight='700' lineHeight='100%'>
 					Products
 				</Text>
+				<Flex px='25px' mb="8px" justifyContent='space-between' align='center'>
+				{/* <Text color={textColor} fontSize='22px' fontWeight='700' lineHeight='100%'>
+					Products
+				</Text> */}
+				<Button colorScheme="blue" size="sm" ml="10px" onClick={() => console.log("Add Product clicked")}>
+					Add Product
+				</Button>
+			</Flex>
 				<Menu />
 			</Flex>
+			{/* Add Button next to the Products heading inside the main table area */}
+			
 			<Box>
 				<Table variant='simple' color='gray.500' mb='24px' mt="12px">
 					<Thead>
