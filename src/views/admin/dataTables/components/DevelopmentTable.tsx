@@ -1,5 +1,7 @@
 import {
-	Box, Flex, Icon, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Button
+	Box, Flex, Icon, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Button,
+	Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter,
+	Input, FormControl, FormLabel, useDisclosure
 } from '@chakra-ui/react';
 import {
 	createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable
@@ -21,10 +23,23 @@ const columnHelper = createColumnHelper<RowObj>();
 
 export default function ComplexTable(props: { tableData: RowObj[], onProductClick: (product: RowObj) => void }) {
 	const { tableData, onProductClick } = props;
+	const [data, setData] = React.useState<RowObj[]>(tableData);  // Local state to store data
 	const [sorting, setSorting] = React.useState<SortingState>([]);
 	const textColor = useColorModeValue('secondaryGray.900', 'white');
 	const iconColor = useColorModeValue('secondaryGray.500', 'white');
 	const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+
+	// Modal control for Add Product
+	const { isOpen, onOpen, onClose } = useDisclosure();
+	const [newProduct, setNewProduct] = React.useState<RowObj>({ name: '', status: '', date: '', progress: 0 });
+
+	const handleAddProduct = () => {
+		// Add new product to the data
+		setData([...data, newProduct]);
+		onClose(); // Close the modal
+		setNewProduct({ name: '', status: '', date: '', progress: 0 }); // Reset the form
+	};
+
 	const columns = [
 		columnHelper.accessor('name', {
 			id: 'name',
@@ -73,8 +88,9 @@ export default function ComplexTable(props: { tableData: RowObj[], onProductClic
 			)
 		})
 	];
+
 	const table = useReactTable({
-		data: tableData,
+		data,
 		columns,
 		state: { sorting },
 		onSortingChange: setSorting,
@@ -89,18 +105,11 @@ export default function ComplexTable(props: { tableData: RowObj[], onProductClic
 				<Text color={textColor} fontSize='22px' fontWeight='700' lineHeight='100%'>
 					Products
 				</Text>
-				<Flex px='25px' mb="8px" justifyContent='space-between' align='center'>
-				{/* <Text color={textColor} fontSize='22px' fontWeight='700' lineHeight='100%'>
-					Products
-				</Text> */}
-				<Button colorScheme="blue" size="sm" ml="10px" onClick={() => console.log("Add Product clicked")}>
+				<Button colorScheme="blue" size="sm" onClick={onOpen}>
 					Add Product
 				</Button>
-			</Flex>
 				<Menu />
 			</Flex>
-			{/* Add Button next to the Products heading inside the main table area */}
-			
 			<Box>
 				<Table variant='simple' color='gray.500' mb='24px' mt="12px">
 					<Thead>
@@ -140,6 +149,58 @@ export default function ComplexTable(props: { tableData: RowObj[], onProductClic
 					</Tbody>
 				</Table>
 			</Box>
+
+			{/* Add Product Modal */}
+			<Modal isOpen={isOpen} onClose={onClose}>
+				<ModalOverlay />
+				<ModalContent>
+					<ModalHeader>Add New Product</ModalHeader>
+					<ModalCloseButton />
+					<ModalBody>
+						<FormControl mb={4}>
+							<FormLabel>Product Name</FormLabel>
+							<Input
+								value={newProduct.name}
+								onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+								placeholder="Enter product name"
+							/>
+						</FormControl>
+						<FormControl mb={4}>
+							<FormLabel>Status</FormLabel>
+							<Input
+								value={newProduct.status}
+								onChange={(e) => setNewProduct({ ...newProduct, status: e.target.value })}
+								placeholder="Enter status"
+							/>
+						</FormControl>
+						<FormControl mb={4}>
+							<FormLabel>Date</FormLabel>
+							<Input
+								type="date"
+								value={newProduct.date}
+								onChange={(e) => setNewProduct({ ...newProduct, date: e.target.value })}
+							/>
+						</FormControl>
+						<FormControl mb={4}>
+							<FormLabel>Progress</FormLabel>
+							<Input
+								type="number"
+								value={newProduct.progress}
+								onChange={(e) => setNewProduct({ ...newProduct, progress: parseInt(e.target.value) })}
+								placeholder="Enter progress"
+							/>
+						</FormControl>
+					</ModalBody>
+					<ModalFooter>
+						<Button colorScheme="blue" onClick={handleAddProduct}>
+							Add Product
+						</Button>
+						<Button variant="ghost" onClick={onClose} ml={3}>
+							Cancel
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
 		</Card>
 	);
 }
