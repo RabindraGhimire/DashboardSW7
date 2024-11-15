@@ -23,7 +23,7 @@
 // Chakra imports
 import { Avatar, Box, Flex, FormLabel, Icon, Select, SimpleGrid, useColorModeValue } from '@chakra-ui/react';
 // Assets
-import Usa from 'assets/img/dashboards/usa.png';
+import Usa from 'assets/img/dashboards/dk.png';
 // Custom components
 import MiniCalendar from 'components/calendar/MiniCalendar';
 import MiniStatistics from 'components/card/MiniStatistics';
@@ -80,7 +80,7 @@ export default function UserReports() {
 							<Select id='balance' variant='mini' mt='5px' me='0px' defaultValue='usd'>
 								<option value='usd'>USD</option>
 								<option value='eur'>EUR</option>
-								<option value='gba'>GBA</option>
+								<option value='gba'>DKK</option>
 							</Select>
 						</Flex>
 					}
