@@ -16,6 +16,7 @@ import DataTables from 'views/admin/dataTables';
 // Auth Imports
 import SignInCentered from 'views/auth/signIn';
 import Packages from 'views/admin/dataTables/packages';
+import Orders from 'views/admin/orders/orders';
 
 const routes = [
   {
@@ -53,6 +54,13 @@ const routes = [
     path: '/packages',
     icon: <Icon as={MdLock} width="20px" height="20px" color="inherit" />,
     component: <Packages />,
+  },
+  {
+    name: 'Orders',
+    layout: '/admin',
+    path: '/orders',
+    icon: <Icon as={MdLock} width="20px" height="20px" color="inherit" />,
+    component: <Orders />,
   },
   {
     name: 'Profile',
