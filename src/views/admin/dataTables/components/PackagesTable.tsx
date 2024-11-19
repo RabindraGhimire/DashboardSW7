@@ -21,7 +21,7 @@ type RowObj = {
 
 const columnHelper = createColumnHelper<RowObj>();
 
-export default function ComplexTable(props: { tableData: RowObj[], onProductClick: (product: RowObj) => void }) {
+export default function PackageTable(props: { tableData: RowObj[], onProductClick: (product: RowObj) => void }) {
 	const { tableData, onProductClick } = props;
 	const [data, setData] = React.useState<RowObj[]>(tableData);  // Local state to store data
 	const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -103,10 +103,10 @@ export default function ComplexTable(props: { tableData: RowObj[], onProductClic
 		<Card flexDirection='column' w='100%' px='0px' overflowX={{ sm: 'scroll', lg: 'hidden' }}>
 			<Flex px='25px' mb="8px" justifyContent='space-between' align='center'>
 				<Text color={textColor} fontSize='22px' fontWeight='700' lineHeight='100%'>
-					Products
+					Packages
 				</Text>
 				<Button colorScheme="blue" size="sm" onClick={onOpen}>
-					Add New Product
+					Add New Package
 				</Button>
 				<Menu />
 			</Flex>
