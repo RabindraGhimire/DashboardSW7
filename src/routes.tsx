@@ -5,6 +5,7 @@ import {
   MdHome,
   MdLock,
   MdOutlineShoppingCart,
+  MdGroup,
 } from 'react-icons/md';
 
 // Admin Components
@@ -44,7 +45,7 @@ const routes = [
     path: '/nft-marketplace',
     icon: (
       <Icon
-        as={MdOutlineShoppingCart}
+        as={MdGroup}
         width="20px"
         height="20px"
         color="inherit"
@@ -73,7 +74,7 @@ const routes = [
     name: 'Orders',
     layout: '/admin',
     path: '/orders',
-    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={MdOutlineShoppingCart} width="20px" height="20px" color="inherit" />,
     component: <Orders />,
     isPrivate: true,
   },
