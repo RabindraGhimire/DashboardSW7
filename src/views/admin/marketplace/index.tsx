@@ -1,225 +1,265 @@
-/*!
-  _   _  ___  ____  ___ ________  _   _   _   _ ___   
- | | | |/ _ \|  _ \|_ _|__  / _ \| \ | | | | | |_ _| 
- | |_| | | | | |_) || |  / / | | |  \| | | | | || | 
- |  _  | |_| |  _ < | | / /| |_| | |\  | | |_| || |
- |_| |_|\___/|_| \_\___/____\___/|_| \_|  \___/|___|
-                                                                                                                                                                                                                                                                                                                                       
-=========================================================
-* Horizon UI - v1.1.0
-=========================================================
+import React, { useState } from 'react';
+import {
+  Box,
+  Grid,
+  Text,
+  Avatar,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  TableContainer,
+  Flex,
+  Button,
+  VStack,
+  HStack,
+  Badge,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  useDisclosure,
+  useToast,
+} from '@chakra-ui/react';
 
-* Product Page: https://www.horizon-ui.com/
-* Copyright 2022 Horizon UI (https://www.horizon-ui.com/)
+// Dummy User Data
+const initialUsers = [
+  {
+    id: 1,
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    profilePicture: 'https://i.pravatar.cc/150?img=1',
+    contact: '+1-123-456-7890',
+    orders: [
+      {
+        id: 'P001',
+        name: 'Product1',
+        quantity: 2,
+        review: 'Great Product',
+      },
+      {
+        id: 'P002',
+        name: 'Package6',
+        quantity: 1,
+        review: 'Comfortable to use.',
+      },
+    ],
+    rating: 4.8,
+  },
+  {
+    id: 2,
+    name: 'Jane Smith',
+    email: 'jane.smith@example.com',
+    profilePicture: 'https://i.pravatar.cc/150?img=2',
+    contact: '+1-987-654-3210',
+    orders: [
+      {
+        id: 'P003',
+        name: 'Package1',
+        quantity: 1,
+        review: 'Great Sound.',
+      },
+      {
+        id: 'P004',
+        name: 'Package4',
+        quantity: 3,
+        review: 'Issue with plugs.',
+      },
+    ],
+    rating: 4.5,
+  },
+];
 
-* Designed and Coded by Simmmple
+export default function UsersPage() {
+  const [users, setUsers] = useState(initialUsers);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState<number | null>(
+    null
+  );
+  const toast = useToast();
 
-=========================================================
+  // Handle viewing user details
+  const handleViewUser = (user: any) => {
+    setSelectedUser(user);
+    onOpen();
+  };
 
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+  // Handle deleting a user
+  const handleDeleteUser = (userId: any) => {
+    setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+    setDeleteConfirmOpen(null);
+    toast({
+      title: 'User Deleted',
+      description: 'The user has been successfully removed.',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
 
-*/
+  return (
+    <Box p="20px" pt={{ base: '130px', md: '100px' }} bg="gray.50" minH="100vh">
+      <Text fontSize="2xl" fontWeight="bold" mb="4">
+        User Management
+      </Text>
 
-import React from 'react';
+      {/* User Table */}
+      <TableContainer bg="white" borderRadius="8px" shadow="md" p="20px">
+        <Table variant="simple">
+          <Thead>
+            <Tr>
+              <Th>User</Th>
+              <Th>Email</Th>
+              <Th>Contact</Th>
+              <Th>Orders</Th>
+              <Th>Rating</Th>
+              <Th>Actions</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {users.map((user) => (
+              <Tr key={user.id}>
+                <Td>
+                  <HStack>
+                    <Avatar src={user.profilePicture} name={user.name} />
+                    <VStack align="start" spacing="0">
+                      <Text fontWeight="bold">{user.name}</Text>
+                      <Text fontSize="sm" color="gray.500">
+                        ID: {user.id}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </Td>
+                <Td>
+                  <Text>{user.email}</Text>
+                </Td>
+                <Td>
+                  <Text>{user.contact}</Text>
+                </Td>
+                <Td>
+                  <Badge colorScheme="blue">{user.orders.length} Orders</Badge>
+                </Td>
+                <Td>
+                  <Badge colorScheme="green">{user.rating} ⭐</Badge>
+                </Td>
+                <Td>
+                  <Flex gap="2">
+                    <Button
+                      size="sm"
+                      colorScheme="blue"
+                      onClick={() => handleViewUser(user)}
+                    >
+                      View
+                    </Button>
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      onClick={() => setDeleteConfirmOpen(user.id)}
+                    >
+                      Delete
+                    </Button>
+                  </Flex>
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </TableContainer>
 
-// Chakra imports
-import { Box, Button, Flex, Grid, Link, Text, useColorModeValue, SimpleGrid } from '@chakra-ui/react';
+      {/* View User Modal */}
+      {selectedUser && (
+        <Modal isOpen={isOpen} onClose={onClose} size="lg">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>User Details</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              {/* User Information */}
+              <HStack mb="4">
+                <Avatar
+                  src={selectedUser.profilePicture}
+                  name={selectedUser.name}
+                  size="lg"
+                />
+                <VStack align="start">
+                  <Text fontWeight="bold">{selectedUser.name}</Text>
+                  <Text>{selectedUser.email}</Text>
+                  <Text>{selectedUser.contact}</Text>
+                </VStack>
+              </HStack>
 
-// Custom components
-import Banner from 'views/admin/marketplace/components/Banner';
-import TableTopCreators from 'views/admin/marketplace/components/TableTopCreators';
-import HistoryItem from 'views/admin/marketplace/components/HistoryItem';
-import NFT from 'components/card/NFT';
-import Card from 'components/card/Card';
+              {/* Orders */}
+              <Text fontSize="lg" fontWeight="bold" mt="4" mb="2">
+                Orders
+              </Text>
+              {selectedUser.orders.length > 0 ? (
+                <VStack align="start" spacing="4">
+                  {selectedUser.orders.map((order: any, index: any) => (
+                    <Box
+                      key={index}
+                      p="10px"
+                      borderRadius="8px"
+                      border="1px solid"
+                      borderColor="gray.200"
+                      width="100%"
+                    >
+                      <Flex justify="space-between">
+                        <Text fontWeight="bold">{order.name}</Text>
+                        <Text>x{order.quantity}</Text>
+                      </Flex>
+                      <Text fontSize="sm" mt="2">
+                        Review: {order.review || 'No review provided.'}
+                      </Text>
+                    </Box>
+                  ))}
+                </VStack>
+              ) : (
+                <Text>No orders available.</Text>
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button colorScheme="blue" onClick={onClose}>
+                Close
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
 
-// Assets
-import Nft1 from 'assets/img/nfts/Nft1.png';
-import Nft2 from 'assets/img/nfts/Nft2.png';
-import Nft3 from 'assets/img/nfts/Nft3.png';
-import Nft4 from 'assets/img/nfts/Nft4.png';
-import Nft5 from 'assets/img/nfts/Nft5.png';
-import Nft6 from 'assets/img/nfts/Nft6.png';
-import Avatar1 from 'assets/img/avatars/avatar1.png';
-import Avatar2 from 'assets/img/avatars/avatar2.png';
-import Avatar3 from 'assets/img/avatars/avatar3.png';
-import Avatar4 from 'assets/img/avatars/avatar4.png';
-import tableDataTopCreators from 'views/admin/marketplace/variables/tableDataTopCreators'; 
-
-export default function Marketplace() {
-	// Chakra Color Mode
-	const textColor = useColorModeValue('secondaryGray.900', 'white');
-	const textColorBrand = useColorModeValue('brand.500', 'white');
-	return (
-		<Box pt={{ base: '180px', md: '80px', xl: '80px' }}>
-			{/* Main Fields */}
-			<Grid
-				mb='20px'
-				gridTemplateColumns={{ xl: 'repeat(3, 1fr)', '2xl': '1fr 0.46fr' }}
-				gap={{ base: '20px', xl: '20px' }}
-				display={{ base: 'block', xl: 'grid' }}>
-				<Flex flexDirection='column' gridArea={{ xl: '1 / 1 / 2 / 3', '2xl': '1 / 1 / 2 / 2' }}>
-					<Banner />
-					<Flex direction='column'>
-						<Flex
-							mt='45px'
-							mb='20px'
-							justifyContent='space-between'
-							direction={{ base: 'column', md: 'row' }}
-							align={{ base: 'start', md: 'center' }}>
-							<Text color={textColor} fontSize='2xl' ms='24px' fontWeight='700'>
-								Trending NFTs
-							</Text>
-							<Flex
-								align='center'
-								me='20px'
-								ms={{ base: '24px', md: '0px' }}
-								mt={{ base: '20px', md: '0px' }}>
-								<Link
-									color={textColorBrand}
-									fontWeight='500'
-									me={{ base: '34px', md: '44px' }}
-									href='#art'>
-									Art
-								</Link>
-								<Link
-									color={textColorBrand}
-									fontWeight='500'
-									me={{ base: '34px', md: '44px' }}
-									href='#music'>
-									Music
-								</Link>
-								<Link
-									color={textColorBrand}
-									fontWeight='500'
-									me={{ base: '34px', md: '44px' }}
-									href='#collectibles'>
-									Collectibles
-								</Link>
-								<Link color={textColorBrand} fontWeight='500' href='#sports'>
-									Sports
-								</Link>
-							</Flex>
-						</Flex>
-						<SimpleGrid columns={{ base: 1, md: 3 }} gap='20px'>
-							<NFT
-								name='Abstract Colors'
-								author='By Esthera Jackson'
-								bidders={[ Avatar1, Avatar2, Avatar3, Avatar4, Avatar1, Avatar1, Avatar1, Avatar1 ]}
-								image={Nft1}
-								currentbid='0.91 ETH'
-								download='#'
-							/>
-							<NFT
-								name='ETH AI Brain'
-								author='By Nick Wilson'
-								bidders={[ Avatar1, Avatar2, Avatar3, Avatar4, Avatar1, Avatar1, Avatar1, Avatar1 ]}
-								image={Nft2}
-								currentbid='0.91 ETH'
-								download='#'
-							/>
-							<NFT
-								name='Mesh Gradients '
-								author='By Will Smith'
-								bidders={[ Avatar1, Avatar2, Avatar3, Avatar4, Avatar1, Avatar1, Avatar1, Avatar1 ]}
-								image={Nft3}
-								currentbid='0.91 ETH'
-								download='#'
-							/>
-						</SimpleGrid>
-						<Text mt='45px' mb='36px' color={textColor} fontSize='2xl' ms='24px' fontWeight='700'>
-							Recently Added
-						</Text>
-						<SimpleGrid columns={{ base: 1, md: 3 }} gap='20px' mb={{ base: '20px', xl: '0px' }}>
-							<NFT
-								name='Swipe Circles'
-								author='By Peter Will'
-								bidders={[ Avatar1, Avatar2, Avatar3, Avatar4, Avatar1, Avatar1, Avatar1, Avatar1 ]}
-								image={Nft4}
-								currentbid='0.91 ETH'
-								download='#'
-							/>
-							<NFT
-								name='Colorful Heaven'
-								author='By Mark Benjamin'
-								bidders={[ Avatar1, Avatar2, Avatar3, Avatar4, Avatar1, Avatar1, Avatar1, Avatar1 ]}
-								image={Nft5}
-								currentbid='0.91 ETH'
-								download='#'
-							/>
-							<NFT
-								name='3D Cubes Art'
-								author='By Manny Gates'
-								bidders={[ Avatar1, Avatar2, Avatar3, Avatar4, Avatar1, Avatar1, Avatar1, Avatar1 ]}
-								image={Nft6}
-								currentbid='0.91 ETH'
-								download='#'
-							/>
-						</SimpleGrid>
-					</Flex>
-				</Flex>
-				<Flex flexDirection='column' gridArea={{ xl: '1 / 3 / 2 / 4', '2xl': '1 / 2 / 2 / 3' }}>
-					<Card px='0px' mb='20px'>
-						<TableTopCreators tableData={tableDataTopCreators}  />
-					</Card>
-					<Card p='0px'>
-						<Flex
-							align={{ sm: 'flex-start', lg: 'center' }}
-							justify='space-between'
-							w='100%'
-							px='22px'
-							py='18px'>
-							<Text color={textColor} fontSize='xl' fontWeight='600'>
-								History
-							</Text>
-							<Button variant='action'>See all</Button>
-						</Flex>
-
-						<HistoryItem
-							name='Colorful Heaven'
-							author='By Mark Benjamin'
-							date='30s ago'
-							image={Nft5}
-							price='0.91 ETH'
-						/>
-						<HistoryItem
-							name='Abstract Colors'
-							author='By Esthera Jackson'
-							date='58s ago'
-							image={Nft1}
-							price='0.91 ETH'
-						/>
-						<HistoryItem
-							name='ETH AI Brain'
-							author='By Nick Wilson'
-							date='1m ago'
-							image={Nft2}
-							price='0.91 ETH'
-						/>
-						<HistoryItem
-							name='Swipe Circles'
-							author='By Peter Will'
-							date='1m ago'
-							image={Nft4}
-							price='0.91 ETH'
-						/>
-						<HistoryItem
-							name='Mesh Gradients '
-							author='By Will Smith'
-							date='2m ago'
-							image={Nft3}
-							price='0.91 ETH'
-						/>
-						<HistoryItem
-							name='3D Cubes Art'
-							author='By Manny Gates'
-							date='3m ago'
-							image={Nft6}
-							price='0.91 ETH'
-						/>
-					</Card>
-				</Flex>
-			</Grid>
-			{/* Delete Product */}
-		</Box>
-	);
+      {/* Delete Confirmation Modal */}
+      {isDeleteConfirmOpen && (
+        <Modal isOpen={true} onClose={() => setDeleteConfirmOpen(null)}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Delete User</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <Text>Are you sure you want to delete this user?</Text>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                colorScheme="red"
+                mr="3"
+                onClick={() => handleDeleteUser(isDeleteConfirmOpen)}
+              >
+                Yes, Delete
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setDeleteConfirmOpen(null)}
+              >
+                Cancel
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+    </Box>
+  );
 }
