@@ -7,24 +7,36 @@ import {
   MdOutlineShoppingCart,
 } from 'react-icons/md';
 
-// Admin Imports
+// Admin Components
 import MainDashboard from 'views/admin/default';
 import NFTMarketplace from 'views/admin/marketplace';
 import Profile from 'views/admin/profile';
 import DataTables from 'views/admin/dataTables';
-
-// Auth Imports
-import SignInCentered from 'views/auth/signIn';
 import Packages from 'views/admin/dataTables/packages';
 import Orders from 'views/admin/orders/orders';
 
+// Auth Components
+import SignInCentered from 'views/auth/signIn';
+
 const routes = [
+  // Public Routes
+  {
+    name: 'Sign In',
+    layout: '/auth',
+    path: '/sign-in',
+    icon: <Icon as={MdLock} width="20px" height="20px" color="inherit" />,
+    component: <SignInCentered />,
+    isPrivate: false,
+  },
+
+  // Admin Routes
   {
     name: 'Dashboard',
     layout: '/admin',
     path: '/default',
     icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
     component: <MainDashboard />,
+    isPrivate: true,
   },
   {
     name: 'Users',
@@ -39,28 +51,31 @@ const routes = [
       />
     ),
     component: <NFTMarketplace />,
-    secondary: true,
+    isPrivate: true,
   },
   {
     name: 'Products',
     layout: '/admin',
-    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
     path: '/data-tables',
+    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
+    isPrivate: true,
   },
   {
     name: 'Packages',
     layout: '/admin',
     path: '/packages',
-    icon: <Icon as={MdLock} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
     component: <Packages />,
+    isPrivate: true,
   },
   {
     name: 'Orders',
     layout: '/admin',
     path: '/orders',
-    icon: <Icon as={MdLock} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
     component: <Orders />,
+    isPrivate: true,
   },
   {
     name: 'Profile',
@@ -68,13 +83,7 @@ const routes = [
     path: '/profile',
     icon: <Icon as={MdPerson} width="20px" height="20px" color="inherit" />,
     component: <Profile />,
-  },
-  {
-    name: 'Sign In',
-    layout: '/auth',
-    path: '/sign-in',
-    icon: <Icon as={MdLock} width="20px" height="20px" color="inherit" />,
-    component: <SignInCentered />,
+    isPrivate: true,
   },
 ];
 
