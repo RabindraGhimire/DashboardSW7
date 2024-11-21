@@ -1,7 +1,25 @@
 import React, { useState } from 'react';
-import { Box, SimpleGrid, Text, Button, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useColorModeValue } from '@chakra-ui/react';
+import {
+    Box,
+    SimpleGrid,
+    Text,
+    Button,
+    useDisclosure,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalCloseButton,
+    ModalBody,
+    ModalFooter,
+    useColorModeValue,
+    Switch,
+    Flex,
+} from '@chakra-ui/react';
 import DevelopmentTable from 'views/admin/dataTables/components/DevelopmentTable';
 import tableDataDevelopment from 'views/admin/dataTables/variables/tableDataDevelopment';
+import tableDataProductTypes from 'views/admin/dataTables/variables/tableDataCheck'; // Mock data for product types
+import tableDataCheck from '../default/variables/tableDataCheck';
 
 // Function to calculate a dummy availability date (e.g., 30 days from today)
 const getAvailabilityDate = () => {
@@ -15,6 +33,7 @@ export default function Settings() {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [canOrder, setCanOrder] = useState<boolean>(false);
+    const [viewProductTypes, setViewProductTypes] = useState<boolean>(false); // Toggle for table view
 
     // Function to handle product click
     const handleProductClick = (product: any) => {
@@ -41,18 +60,41 @@ export default function Settings() {
 
     return (
         <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
-            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing="20px">
-                {/* Left Box with Development Table */}
-                <Box {...boxStyles}>
-                    <DevelopmentTable
-                        tableData={tableDataDevelopment}
-                        onProductClick={handleProductClick}
+            <Flex justify="space-between" align="center" mb="20px">
+                <Text fontSize="xl" fontWeight="bold">
+                    {viewProductTypes ? 'Product Types' : 'Products'}
+                </Text>
+                <Flex align="center">
+                    <Text mr="10px">View Product Types</Text>
+                    <Switch
+                        isChecked={viewProductTypes}
+                        onChange={() => setViewProductTypes(!viewProductTypes)}
                     />
+                </Flex>
+            </Flex>
+            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing="20px">
+                {/* Left Box with Table */}
+                <Box {...boxStyles}>
+                    {viewProductTypes ? (
+                        // Render Product Types table
+                        <DevelopmentTable
+                            tableData={tableDataDevelopment}
+                            onProductClick={handleProductClick}
+                        />
+                    ) : (
+                        // Render Products table
+                        <DevelopmentTable
+                            tableData={tableDataDevelopment}
+                            onProductClick={handleProductClick}
+                        />
+                    )}
                 </Box>
 
                 {/* Right Box with Instructions */}
                 <Box {...boxStyles}>
-                    <Text>Select a product from the table to see more details and place an order.</Text>
+                    <Text>
+                        Select a {viewProductTypes ? 'product type' : 'product'} from the table to see more details.
+                    </Text>
                 </Box>
             </SimpleGrid>
 
