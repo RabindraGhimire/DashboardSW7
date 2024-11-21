@@ -38,6 +38,10 @@ import TotalSpent from 'views/admin/default/components/TotalSpent';
 import WeeklyRevenue from 'views/admin/default/components/WeeklyRevenue';
 import tableDataCheck from 'views/admin/default/variables/tableDataCheck';
 import tableDataComplex from 'views/admin/default/variables/tableDataComplex';
+import PackageTable from '../dataTables/components/PackagesTable';
+import tableDataPackages from '../dataTables/variables/tableDataPackages';
+import DevelopmentTable from '../dataTables/components/DevelopmentTable';
+import tableDataDevelopment from './variables/tableDataDevelopment';
 
 export default function UserReports() {
 	// Chakra Color Mode
@@ -46,7 +50,7 @@ export default function UserReports() {
 	return (
 		<Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
 			<SimpleGrid columns={{ base: 1, md: 2, lg: 3, '2xl': 6 }} gap='20px' mb='20px'>
-				<MiniStatistics
+				{/* <MiniStatistics
 					startContent={
 						<IconBox
 							w='56px'
@@ -57,8 +61,8 @@ export default function UserReports() {
 					}
 					name='Earnings'
 					value='350 Dkk'
-				/>
-				<MiniStatistics
+				/> */}
+				{/* <MiniStatistics
 					startContent={
 						<IconBox
 							w='56px'
@@ -69,24 +73,22 @@ export default function UserReports() {
 					}
 					name='Spend this month'
 					value='642.39 Dkk'
-				/>
+				/> */}
 				<MiniStatistics growth='+23%' name='Sales' value='575 DKK' />
-				<MiniStatistics
+				{/* <MiniStatistics
 					endContent={
 						<Flex me='-16px' mt='10px'>
 							<FormLabel htmlFor='balance'>
 								<Avatar src={Usa} />
 							</FormLabel>
 							<Select id='balance' variant='mini' mt='5px' me='0px' defaultValue='usd'>
-								<option value='usd'>USD</option>
-								<option value='eur'>EUR</option>
 								<option value='gba'>DKK</option>
 							</Select>
 						</Flex>
 					}
 					name='Your balance'
 					value='1.000 Dkk'
-				/>
+				/> */}
 				<MiniStatistics
 					startContent={
 						<IconBox
@@ -111,6 +113,18 @@ export default function UserReports() {
 					name='Total Products'
 					value='29'
 				/>
+				<MiniStatistics
+					startContent={
+						<IconBox
+							w='56px'
+							h='56px'
+							bg={boxBg}
+							icon={<Icon w='32px' h='32px' as={MdFileCopy} color={brandColor} />}
+						/>
+					}
+					name='Total Packages'
+					value='29'
+				/>
 			</SimpleGrid>
 
 			<SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px' mb='20px'>
@@ -118,14 +132,18 @@ export default function UserReports() {
 				<WeeklyRevenue />
 			</SimpleGrid>
 			<SimpleGrid columns={{ base: 1, md: 1, xl: 2 }} gap='20px' mb='20px'>
-				<CheckTable tableData={tableDataCheck} />
+				<PackageTable tableData={tableDataPackages} onProductClick={function (product: { name: string; status: string; date: string; progress: number; }): void {
+					throw new Error('Function not implemented.');
+				} } />
 				<SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px'>
 					<DailyTraffic />
 					<PieCard />
 				</SimpleGrid>
 			</SimpleGrid>
 			<SimpleGrid columns={{ base: 1, md: 1, xl: 2 }} gap='20px' mb='20px'>
-				<ComplexTable tableData={tableDataComplex} />
+				<DevelopmentTable tableData={tableDataDevelopment} onProductClick={function (product: { name: string; status: string; date: string; progress: number; }): void {
+					throw new Error('Function not implemented.');
+				} } />
 				<SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px'>
 					<Tasks />
 					<MiniCalendar h='100%' minW='100%' selectRange={false} />

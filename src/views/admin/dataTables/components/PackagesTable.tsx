@@ -21,7 +21,7 @@ type RowObj = {
 
 const columnHelper = createColumnHelper<RowObj>();
 
-export default function PackageTable(props: { tableData: RowObj[], onProductClick: (product: RowObj) => void }) {
+export default function PackageTable(props: { tableData: any, onProductClick: (product: RowObj) => void }) {
 	const { tableData, onProductClick } = props;
 	const [data, setData] = React.useState<RowObj[]>(tableData);  // Local state to store data
 	const [sorting, setSorting] = React.useState<SortingState>([]);
