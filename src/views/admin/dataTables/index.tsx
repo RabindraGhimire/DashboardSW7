@@ -3,49 +3,32 @@ import {
     Box,
     SimpleGrid,
     Text,
-    Button,
-    useDisclosure,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalCloseButton,
-    ModalBody,
-    ModalFooter,
-    useColorModeValue,
     Switch,
     Flex,
+    Image,
+    VStack,
+    Tag,
+    Tooltip,
+    Icon,
+    Fade,
+    Collapse,
+    Button,
+    Progress,
 } from '@chakra-ui/react';
-import DevelopmentTable from 'views/admin/dataTables/components/DevelopmentTable';
-import tableDataDevelopment from 'views/admin/dataTables/variables/tableDataDevelopment';
-import tableDataProductTypes from 'views/admin/dataTables/variables/tableDataCheck'; // Mock data for product types
-import tableDataCheck from '../default/variables/tableDataCheck';
+import { InfoIcon } from '@chakra-ui/icons';
+import { FiImage } from 'react-icons/fi'; // Icon for placeholder image
+import DevelopmentTable from 'views/admin/dataTables/components/DevelopmentTable'; // Assuming this component exists and can handle the products
+import tableDataDevelopment from 'views/admin/dataTables/variables/tableDataDevelopment'; // Your data
 
-// Function to calculate a dummy availability date (e.g., 30 days from today)
-const getAvailabilityDate = () => {
-    const today = new Date();
-    today.setDate(today.getDate() + 30); // Set 30 days in the future
-    return today.toLocaleDateString();   // Format the date as a string
-};
-
-// Main component
 export default function Settings() {
-    const { isOpen, onOpen, onClose } = useDisclosure();
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
-    const [canOrder, setCanOrder] = useState<boolean>(false);
-    const [viewProductTypes, setViewProductTypes] = useState<boolean>(false); // Toggle for table view
+    const [viewProductTypes, setViewProductTypes] = useState<boolean>(false);
+    const [showFullDescription, setShowFullDescription] = useState<boolean>(false); // State for description toggle
 
     // Function to handle product click
     const handleProductClick = (product: any) => {
-        setSelectedProduct(product);
-
-        // Check if the product is ready to order
-        if (product.status === 'Ready to Order') {
-            setCanOrder(true);  // Enable ordering
-        } else {
-            setCanOrder(false); // Show status-only message
-        }
-        onOpen(); // Open the modal in either case
+        setSelectedProduct(product); // Update state with the selected product
+        setShowFullDescription(false); // Reset description toggle
     };
 
     // Base box styling for containers
@@ -61,9 +44,9 @@ export default function Settings() {
     return (
         <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
             <Flex justify="space-between" align="center" mb="20px">
-                <Text fontSize="xl" fontWeight="bold">
+                {/* <Text fontSize="2xl" fontWeight="bold">
                     {viewProductTypes ? 'Product Types' : 'Products'}
-                </Text>
+                </Text> */}
                 <Flex align="center">
                     <Text mr="10px">View Product Types</Text>
                     <Switch
@@ -72,70 +55,107 @@ export default function Settings() {
                     />
                 </Flex>
             </Flex>
+
             <SimpleGrid columns={{ base: 1, lg: 2 }} spacing="20px">
-                {/* Left Box with Table */}
+                {/* Left Box with Product List */}
                 <Box {...boxStyles}>
-                    {viewProductTypes ? (
-                        // Render Product Types table
-                        <DevelopmentTable
-                            tableData={tableDataDevelopment}
-                            onProductClick={handleProductClick}
-                        />
+                    {/* Product Table */}
+                    <DevelopmentTable
+                        tableData={tableDataDevelopment} // Pass all the products (no pagination logic)
+                        onProductClick={handleProductClick}
+                    />
+                </Box>
+
+                {/* Right Box with Product Details */}
+                <Box
+                    {...boxStyles}
+                    textAlign="center"
+                    _hover={{ boxShadow: 'xl', transform: 'scale(1.02)', transition: '0.3s ease' }}
+                >
+                    {selectedProduct ? (
+                        <Fade in={!!selectedProduct}>
+                            <VStack spacing={4}>
+                                {/* Product Image */}
+                                {selectedProduct.image ? (
+                                    <Image
+                                        src={selectedProduct.image}
+                                        alt={selectedProduct.name}
+                                        borderRadius="md"
+                                        boxShadow="md"
+                                        maxW="200px"
+                                        maxH="200px"
+                                        objectFit="cover"
+                                        _hover={{ transform: 'scale(1.05)', transition: '0.2s ease' }}
+                                    />
+                                ) : (
+                                    <Flex
+                                        align="center"
+                                        justify="center"
+                                        w="200px"
+                                        h="200px"
+                                        bg="gray.100"
+                                        borderRadius="md"
+                                        boxShadow="md"
+                                    >
+                                        <Icon as={FiImage} boxSize="8" color="gray.400" />
+                                    </Flex>
+                                )}
+
+                                {/* Product Name */}
+                                <Text fontSize="lg" fontWeight="bold">
+                                    {selectedProduct.name}
+                                </Text>
+
+                                {/* Expandable Description */}
+                                <Box textAlign="left" w="full">
+                                    <Collapse startingHeight={40} in={showFullDescription}>
+                                        <Text color="gray.600" fontSize="md">
+                                            {selectedProduct.description || 'No description available.'}
+                                        </Text>
+                                    </Collapse>
+                                    <Button
+                                        size="sm"
+                                        mt="10px"
+                                        onClick={() => setShowFullDescription(!showFullDescription)}
+                                    >
+                                        {showFullDescription ? 'Show Less' : 'Read More'}
+                                    </Button>
+                                </Box>
+
+                                {/* Progress Bar */}
+                                {selectedProduct.progress !== undefined && (
+                                    <Box w="full" textAlign="left">
+                                        <Text fontSize="sm" fontWeight="semibold" mb="2">
+                                            Manufacturing Progress:
+                                        </Text>
+                                        <Progress
+                                            value={selectedProduct.progress}
+                                            size="sm"
+                                            colorScheme="blue"
+                                            borderRadius="md"
+                                        />
+                                    </Box>
+                                )}
+
+                                {/* Product Status */}
+                                <Flex align="center" justify="center">
+                                    <Tag
+                                        size="lg"
+                                        colorScheme={selectedProduct.status === 'Ready to Order' ? 'green' : selectedProduct.status === 'In Repair' ? 'orange' : 'red'}
+                                    >
+                                        {selectedProduct.status}
+                                    </Tag>
+                                    <Tooltip label="Current status of the product" fontSize="sm">
+                                        <InfoIcon ml="8px" color="gray.500" />
+                                    </Tooltip>
+                                </Flex>
+                            </VStack>
+                        </Fade>
                     ) : (
-                        // Render Products table
-                        <DevelopmentTable
-                            tableData={tableDataDevelopment}
-                            onProductClick={handleProductClick}
-                        />
+                        <Text color="gray.500">Select a product to see its details here.</Text>
                     )}
                 </Box>
-
-                {/* Right Box with Instructions */}
-                <Box {...boxStyles}>
-                    <Text>
-                        Select a {viewProductTypes ? 'product type' : 'product'} from the table to see more details.
-                    </Text>
-                </Box>
             </SimpleGrid>
-
-            {/* Modal for Product Details or Status Message */}
-            <Modal isOpen={isOpen} onClose={onClose}>
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>{selectedProduct?.name}</ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                        {canOrder ? (
-                            // Display product details if the product is "Ready to Order"
-                            <>
-                                <Text>Tech: {selectedProduct?.status}</Text>
-                                <Text mt="10px">Manufacture Date: {selectedProduct?.date}</Text>
-                                <Text mt="10px">Progress: {selectedProduct?.progress}%</Text>
-                                <Text mt="10px">Description: {selectedProduct?.description}</Text>
-                            </>
-                        ) : (
-                            // Display a message based on the product status
-                            <>
-                                <Text>This item cannot be ordered.</Text>
-                                <Text mt="10px">Current Status: {selectedProduct?.status}</Text>
-                                {(selectedProduct?.status === 'Occupied' || selectedProduct?.status === 'In Repair') && (
-                                    <Text mt="10px">
-                                        This item will be available to order on: <strong>{getAvailabilityDate()}</strong>
-                                    </Text>
-                                )}
-                            </>
-                        )}
-                    </ModalBody>
-                    <ModalFooter>
-                        {canOrder ? (
-                            <Button colorScheme="blue" mr={3} onClick={() => alert('Order placed!')}>
-                                Order
-                            </Button>
-                        ) : null}
-                        <Button variant="ghost" onClick={onClose}>Close</Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
         </Box>
     );
 }
