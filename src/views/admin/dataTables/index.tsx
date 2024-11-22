@@ -16,19 +16,21 @@ import {
     Progress,
 } from '@chakra-ui/react';
 import { InfoIcon } from '@chakra-ui/icons';
-import { FiImage } from 'react-icons/fi'; // Icon for placeholder image
-import DevelopmentTable from 'views/admin/dataTables/components/DevelopmentTable'; // Assuming this component exists and can handle the products
-import tableDataDevelopment from 'views/admin/dataTables/variables/tableDataDevelopment'; // Your data
+import { FiImage } from 'react-icons/fi';
+import DevelopmentTable from 'views/admin/dataTables/components/DevelopmentTable'; // Assuming this component exists
+import tableDataDevelopment from 'views/admin/dataTables/variables/tableDataDevelopment'; // Products data
+import tableDataProductTypes from 'views/admin/dataTables/variables/tableDataProductType'; // Product types data
+import ProductTypeTable from './components/ProductTypeTable';
 
 export default function Settings() {
-    const [selectedProduct, setSelectedProduct] = useState<any>(null);
-    const [viewProductTypes, setViewProductTypes] = useState<boolean>(false);
+    const [selectedItem, setSelectedItem] = useState<any>(null); // Tracks the selected product or product type
+    const [viewProductTypes, setViewProductTypes] = useState<boolean>(false); // Toggle for table view
     const [showFullDescription, setShowFullDescription] = useState<boolean>(false); // State for description toggle
 
-    // Function to handle product click
-    const handleProductClick = (product: any) => {
-        setSelectedProduct(product); // Update state with the selected product
-        setShowFullDescription(false); // Reset description toggle
+    // Function to handle item click (product or product type)
+    const handleItemClick = (item: any) => {
+        setSelectedItem(item);
+        setShowFullDescription(false);
     };
 
     // Base box styling for containers
@@ -44,42 +46,53 @@ export default function Settings() {
     return (
         <Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
             <Flex justify="space-between" align="center" mb="20px">
-                {/* <Text fontSize="2xl" fontWeight="bold">
+                {/* Title and Toggle */}
+                <Text fontSize="2xl" fontWeight="bold">
                     {viewProductTypes ? 'Product Types' : 'Products'}
-                </Text> */}
+                </Text>
                 <Flex align="center">
                     <Text mr="10px">View Product Types</Text>
                     <Switch
                         isChecked={viewProductTypes}
-                        onChange={() => setViewProductTypes(!viewProductTypes)}
+                        onChange={() => {
+                            setViewProductTypes(!viewProductTypes);
+                            setSelectedItem(null); // Reset the selected item when switching
+                        }}
                     />
                 </Flex>
             </Flex>
 
             <SimpleGrid columns={{ base: 1, lg: 2 }} spacing="20px">
-                {/* Left Box with Product List */}
+                {/* Left Box with Table */}
                 <Box {...boxStyles}>
-                    {/* Product Table */}
-                    <DevelopmentTable
-                        tableData={tableDataDevelopment} // Pass all the products (no pagination logic)
-                        onProductClick={handleProductClick}
-                    />
-                </Box>
+    {viewProductTypes ? (
+        <ProductTypeTable
+            tableData={tableDataProductTypes}
+            onProductClick={handleItemClick}
+        />
+    ) : (
+        <DevelopmentTable
+            tableData={tableDataDevelopment}
+            onProductClick={handleItemClick}
+        />
+    )}
+</Box>
 
-                {/* Right Box with Product Details */}
+
+                {/* Right Box with Details */}
                 <Box
                     {...boxStyles}
                     textAlign="center"
                     _hover={{ boxShadow: 'xl', transform: 'scale(1.02)', transition: '0.3s ease' }}
                 >
-                    {selectedProduct ? (
-                        <Fade in={!!selectedProduct}>
+                    {selectedItem ? (
+                        <Fade in={!!selectedItem}>
                             <VStack spacing={4}>
-                                {/* Product Image */}
-                                {selectedProduct.image ? (
+                                {/* Item Image */}
+                                {selectedItem.image ? (
                                     <Image
-                                        src={selectedProduct.image}
-                                        alt={selectedProduct.name}
+                                        src={selectedItem.image}
+                                        alt={selectedItem.name}
                                         borderRadius="md"
                                         boxShadow="md"
                                         maxW="200px"
@@ -101,16 +114,16 @@ export default function Settings() {
                                     </Flex>
                                 )}
 
-                                {/* Product Name */}
+                                {/* Item Name */}
                                 <Text fontSize="lg" fontWeight="bold">
-                                    {selectedProduct.name}
+                                    {selectedItem.name}
                                 </Text>
 
                                 {/* Expandable Description */}
                                 <Box textAlign="left" w="full">
                                     <Collapse startingHeight={40} in={showFullDescription}>
                                         <Text color="gray.600" fontSize="md">
-                                            {selectedProduct.description || 'No description available.'}
+                                            {selectedItem.description || 'No description available.'}
                                         </Text>
                                     </Collapse>
                                     <Button
@@ -122,14 +135,14 @@ export default function Settings() {
                                     </Button>
                                 </Box>
 
-                                {/* Progress Bar */}
-                                {selectedProduct.progress !== undefined && (
+                                {/* Progress Bar (only for products) */}
+                                {!viewProductTypes && selectedItem.progress !== undefined && (
                                     <Box w="full" textAlign="left">
                                         <Text fontSize="sm" fontWeight="semibold" mb="2">
                                             Manufacturing Progress:
                                         </Text>
                                         <Progress
-                                            value={selectedProduct.progress}
+                                            value={selectedItem.progress}
                                             size="sm"
                                             colorScheme="blue"
                                             borderRadius="md"
@@ -137,22 +150,24 @@ export default function Settings() {
                                     </Box>
                                 )}
 
-                                {/* Product Status */}
+                                {/* Item Status */}
                                 <Flex align="center" justify="center">
                                     <Tag
                                         size="lg"
-                                        colorScheme={selectedProduct.status === 'Ready to Order' ? 'green' : selectedProduct.status === 'In Repair' ? 'orange' : 'red'}
+                                        colorScheme={selectedItem.status === 'Ready to Order' ? 'green' : selectedItem.status === 'In Repair' ? 'orange' : 'red'}
                                     >
-                                        {selectedProduct.status}
+                                        {selectedItem.status}
                                     </Tag>
-                                    <Tooltip label="Current status of the product" fontSize="sm">
+                                    <Tooltip label="Current status of the item" fontSize="sm">
                                         <InfoIcon ml="8px" color="gray.500" />
                                     </Tooltip>
                                 </Flex>
                             </VStack>
                         </Fade>
                     ) : (
-                        <Text color="gray.500">Select a product to see its details here.</Text>
+                        <Text color="gray.500">
+                            Select a {viewProductTypes ? 'product type' : 'product'} to see its details here.
+                        </Text>
                     )}
                 </Box>
             </SimpleGrid>
