@@ -5,44 +5,36 @@ import {
   Text,
   Button,
   VStack,
-  Avatar,
   Flex,
   Badge,
+  Avatar,
+  useToast,
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalCloseButton,
-  ModalBody,
   ModalFooter,
+  ModalBody,
+  ModalCloseButton,
   Input,
-  HStack,
-  IconButton,
-  useToast,
+  useDisclosure,
+  Divider,
 } from '@chakra-ui/react';
-import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
 
-// Dummy package data with products
+// Dummy package data with updated fields
 const initialPackages = Array.from({ length: 5 }, (_, i) => ({
-  id: i + 1,
-  name: `Package ${i + 1}`,
-  status: i % 2 === 0 ? 'Available' : 'Unavailable',
-  idCode: `PKG${100 + i}`,
-  eventsCompleted: Math.floor(Math.random() * 100),
-  totalUsed: Math.floor(Math.random() * 1000),
-  issueHistory: Math.floor(Math.random() * 10),
-  capacity: Math.floor(Math.random() * 50) + 50,
-  products: [
-    { id: `PROD-${i + 1}-A`, name: `Product A-${i + 1}`, quantity: 10 },
-    { id: `PROD-${i + 1}-B`, name: `Product B-${i + 1}`, quantity: 5 },
-  ],
+  id: `${i + 1}`,
+  parentEventId: `EVENT-${i + 1}`,
+  archived: i % 2 === 0,
+  title: `Package ${i + 1}`,
+  pickupPointIds: [`PPID-${i + 1}-A`, `PPID-${i + 1}-B`],
+  features: [`Feature 1 for Package ${i + 1}`, `Feature 2 for Package ${i + 1}`],
+  shortDescription: `This is a short description for Package ${i + 1}`,
+  longDescription: `This is a more detailed and long description for Package ${i + 1}.`,
+  images: [`https://example.com/images/package${i + 1}.png`],
+  transparentImages: i % 2 !== 0,
+  options: [],
 }));
-
-const packageHistory = [
-  { id: '001', details: 'Package Created', status: 'Completed' },
-  { id: '002', details: 'First Order Processed', status: 'Completed' },
-  { id: '003', details: 'Package Updated', status: 'Pending' },
-];
 
 const packageEarnings = {
   totalEarnings: '$2000.00',
@@ -52,83 +44,34 @@ const packageEarnings = {
 
 export default function PackagesDashboard() {
   const [packages, setPackages] = useState(initialPackages);
-  const [selectedPackage, setSelectedPackage] = useState<any>(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isModifyModalOpen, setIsModifyModalOpen] = useState(false);
-  const [newPackage, setNewPackage] = useState<any>({
-    name: '',
-    idCode: '',
-    status: 'Available',
-    products: [{ id: '', name: '', quantity: 1 }],
-  });
-  const [updatedPackage, setUpdatedPackage] = useState<any>(null);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [editPackage, setEditPackage] = useState(null);
   const toast = useToast();
 
-  // Handle Add Package Modal
-  const handleAddPackage = () => {
-    setNewPackage({
-      name: '',
-      idCode: '',
-      status: 'Available',
-      products: [{ id: '', name: '', quantity: 1 }],
-    });
-    setIsAddModalOpen(true);
-  };
-
-  const handleSaveNewPackage = () => {
-    setPackages((prev) => [
-      ...prev,
-      {
-        ...newPackage,
-        id: prev.length + 1,
-        eventsCompleted: 0,
-        totalUsed: 0,
-        issueHistory: 0,
-        capacity: 50,
-      },
-    ]);
-    setIsAddModalOpen(false);
+  const handleRemovePackage = (id:any) => {
+    setPackages(packages.filter((pkg) => pkg.id !== id));
+    setSelectedPackage(null);
     toast({
-      title: 'Package Added',
-      description: 'The new package has been added successfully.',
-      status: 'success',
+      title: 'Package removed.',
+      description: `Package with ID ${id} has been removed.`,
+      status: 'info',
       duration: 3000,
       isClosable: true,
     });
   };
 
   const handleModifyPackage = () => {
-    if (selectedPackage) {
-      setUpdatedPackage({ ...selectedPackage });
-      setIsModifyModalOpen(true);
-    }
-  };
-
-  const handleSaveModifiedPackage = () => {
-    setPackages((prev) =>
-      prev.map((pkg) =>
-        pkg.id === updatedPackage.id ? { ...updatedPackage } : pkg
-      )
+    const updatedPackages = packages.map((pkg) =>
+      pkg.id === editPackage.id ? editPackage : pkg
     );
-    setSelectedPackage({ ...updatedPackage });
-    setIsModifyModalOpen(false);
+    setPackages(updatedPackages);
+    setSelectedPackage(editPackage);
+    setEditPackage(null);
+    onClose();
     toast({
-      title: 'Package Updated',
-      description: 'The package details have been updated successfully.',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
-  };
-
-  const handleRemovePackage = () => {
-    setPackages((prev) =>
-      prev.filter((pkg) => pkg.id !== selectedPackage.id)
-    );
-    setSelectedPackage(null);
-    toast({
-      title: 'Package Removed',
-      description: 'The package has been removed successfully.',
+      title: 'Package updated.',
+      description: `Package ${editPackage.title} has been modified.`,
       status: 'success',
       duration: 3000,
       isClosable: true,
@@ -148,19 +91,9 @@ export default function PackagesDashboard() {
           maxHeight="600px"
           gridColumn={{ base: 'span 12', md: 'span 3' }}
         >
-          <Flex justify="space-between" align="center" mb="4">
-            <Text fontSize="lg" fontWeight="bold">
-              All Packages
-            </Text>
-            <Button
-              size="sm"
-              colorScheme="blue"
-              leftIcon={<AddIcon />}
-              onClick={handleAddPackage}
-            >
-              Add Package
-            </Button>
-          </Flex>
+          <Text fontSize="lg" fontWeight="bold" mb="4">
+            All Packages
+          </Text>
           {packages.map((pkg) => (
             <Flex
               key={pkg.id}
@@ -175,16 +108,16 @@ export default function PackagesDashboard() {
               mb="2"
             >
               <Flex align="center" gap="10px">
-                <Avatar name={pkg.name} size="sm" />
+                <Avatar name={pkg.title} size="sm" />
                 <Box>
-                  <Text fontWeight="bold">{pkg.name}</Text>
+                  <Text fontWeight="bold">{pkg.title}</Text>
                   <Text fontSize="sm" color="gray.500">
-                    ID: {pkg.idCode}
+                    ID: {pkg.id}
                   </Text>
                 </Box>
               </Flex>
-              <Badge colorScheme={pkg.status === 'Available' ? 'green' : 'red'}>
-                {pkg.status}
+              <Badge colorScheme={pkg.archived ? 'red' : 'green'}>
+                {pkg.archived ? 'Archived' : 'Active'}
               </Badge>
             </Flex>
           ))}
@@ -192,64 +125,33 @@ export default function PackagesDashboard() {
 
         {/* Right Section */}
         <VStack spacing="20px" align="stretch" gridColumn={{ base: 'span 12', md: 'span 9' }}>
-          {/* Package Information */}
           <Box bg="white" p="20px" borderRadius="8px" shadow="md">
             <Text fontSize="lg" fontWeight="bold" mb="4">
               Package Information
             </Text>
             {selectedPackage ? (
               <>
-                <Flex justify="space-between" align="center" mb="4">
-                  <Box>
-                    <Text fontSize="xl" fontWeight="bold">
-                      {selectedPackage.name}
-                    </Text>
-                    <Text fontSize="sm" color="gray.500">
-                      ID: {selectedPackage.idCode}
-                    </Text>
-                  </Box>
-                  <Badge
-                    colorScheme={
-                      selectedPackage.status === 'Available' ? 'green' : 'red'
-                    }
-                    fontSize="md"
-                    px="3"
-                    py="1"
+                <Text fontSize="xl" fontWeight="bold" mb="2">
+                  {selectedPackage.title}
+                </Text>
+                <Text fontSize="sm" color="gray.500" mb="4">
+                  ID: {selectedPackage.id}
+                </Text>
+                <Text mb="4">{selectedPackage.shortDescription}</Text>
+                <Flex justify="space-between" mb="4">
+                  <Button
+                    colorScheme="blue"
+                    onClick={() => {
+                      setEditPackage(selectedPackage);
+                      onOpen();
+                    }}
                   >
-                    {selectedPackage.status}
-                  </Badge>
-                </Flex>
-
-                <Box mt="20px">
-                  <Text fontSize="lg" fontWeight="bold" mb="4">
-                    Products
-                  </Text>
-                  {selectedPackage.products.map((product: any) => (
-                    <Flex
-                      key={product.id}
-                      align="center"
-                      justify="space-between"
-                      mb="2"
-                      p="10px"
-                      borderBottom="1px solid"
-                      borderColor="gray.200"
-                    >
-                      <Text>
-                        {product.name} (Quantity: {product.quantity})
-                      </Text>
-                      <Text fontSize="sm" color="gray.500">
-                        ID: {product.id}
-                      </Text>
-                    </Flex>
-                  ))}
-                </Box>
-
-                {/* Buttons */}
-                <Flex gap="4" mt="20px">
-                  <Button colorScheme="blue" onClick={handleModifyPackage}>
                     Modify Package
                   </Button>
-                  <Button colorScheme="red" onClick={handleRemovePackage}>
+                  <Button
+                    colorScheme="red"
+                    onClick={() => handleRemovePackage(selectedPackage.id)}
+                  >
                     Remove Package
                   </Button>
                 </Flex>
@@ -259,274 +161,49 @@ export default function PackagesDashboard() {
             )}
           </Box>
 
-          {/* Bottom Two Boxes */}
-          <SimpleGrid columns={2} spacing="20px">
-            {/* Package History */}
+          {/* Bottom Boxes */}
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing="20px">
+            {/* Package Information Box */}
             <Box bg="white" p="20px" borderRadius="8px" shadow="md">
               <Text fontSize="lg" fontWeight="bold" mb="4">
-                Package History
-              </Text>
-              {selectedPackage ? (
-                packageHistory.map((history) => (
-                  <Flex
-                    key={history.id}
-                    justify="space-between"
-                    borderBottom="1px solid"
-                    borderColor="gray.200"
-                    pb="2"
-                    mb="2"
-                  >
-                    <Text>{history.details}</Text>
-                    <Badge
-                      colorScheme={
-                        history.status === 'Completed' ? 'green' : 'orange'
-                      }
-                    >
-                      {history.status}
-                    </Badge>
-                  </Flex>
-                ))
-              ) : (
-                <Text>Select a package to view history</Text>
-              )}
-            </Box>
-
-            {/* Package Earnings */}
-            <Box bg="white" p="20px" borderRadius="8px" shadow="md">
-              <Text fontSize="lg" fontWeight="bold" mb="4">
-                Package Earnings
+                Detailed Information
               </Text>
               {selectedPackage ? (
                 <>
-                  <Text>Total Earnings: {packageEarnings.totalEarnings}</Text>
-                  <Text>Balance: {packageEarnings.balance}</Text>
-                  <Text>Withdrawn: {packageEarnings.withdrawn}</Text>
+                  <Text mb="2">
+                    <strong>Parent Event ID:</strong> {selectedPackage.parentEventId}
+                  </Text>
+                  <Text mb="2">
+                    <strong>Long Description:</strong> {selectedPackage.longDescription}
+                  </Text>
+                  <Text>
+                    <strong>Pickup Points:</strong>{' '}
+                    {selectedPackage.pickupPointIds.join(', ')}
+                  </Text>
                 </>
               ) : (
-                <Text>Select a package to view earnings</Text>
+                <Text>Select a package to view detailed information.</Text>
               )}
+            </Box>
+
+            {/* Package Earnings History Box */}
+            <Box bg="white" p="20px" borderRadius="8px" shadow="md">
+              <Text fontSize="lg" fontWeight="bold" mb="4">
+                Package Earnings History
+              </Text>
+              <Text mb="2">
+                <strong>Total Earnings:</strong> {packageEarnings.totalEarnings}
+              </Text>
+              <Text mb="2">
+                <strong>Balance:</strong> {packageEarnings.balance}
+              </Text>
+              <Text>
+                <strong>Withdrawn:</strong> {packageEarnings.withdrawn}
+              </Text>
             </Box>
           </SimpleGrid>
         </VStack>
       </SimpleGrid>
-
-      {/* Add Package Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Add New Package</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <Input
-                placeholder="Package Name"
-                value={newPackage.name}
-                onChange={(e) =>
-                  setNewPackage((prev:any) => ({ ...prev, name: e.target.value }))
-                }
-              />
-              <Input
-                placeholder="Package ID Code"
-                value={newPackage.idCode}
-                onChange={(e) =>
-                  setNewPackage((prev:any) => ({
-                    ...prev,
-                    idCode: e.target.value,
-                  }))
-                }
-              />
-              <Text fontSize="lg" fontWeight="bold" mt="4">
-                Products
-              </Text>
-              {newPackage.products.map((product:any, index:any) => (
-                <HStack key={index} spacing={4} width="100%">
-                  <Input
-                    placeholder="Product Name"
-                    value={product.name}
-                    onChange={(e) =>
-                      setNewPackage((prev:any) => ({
-                        ...prev,
-                        products: prev.products.map((p:any, i:any) =>
-                          i === index ? { ...p, name: e.target.value } : p
-                        ),
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Product ID"
-                    value={product.id}
-                    onChange={(e) =>
-                      setNewPackage((prev:any) => ({
-                        ...prev,
-                        products: prev.products.map((p:any, i:any) =>
-                          i === index ? { ...p, id: e.target.value } : p
-                        ),
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Quantity"
-                    type="number"
-                    value={product.quantity}
-                    onChange={(e) =>
-                      setNewPackage((prev:any) => ({
-                        ...prev,
-                        products: prev.products.map((p:any, i:any) =>
-                          i === index ? { ...p, quantity: +e.target.value } : p
-                        ),
-                      }))
-                    }
-                  />
-                  <IconButton
-                    icon={<DeleteIcon />}
-                    colorScheme="red"
-                    onClick={() =>
-                      setNewPackage((prev:any) => ({
-                        ...prev,
-                        products: prev.products.filter((_:any, i:any) => i !== index),
-                      }))
-                    }
-                    aria-label="Remove Product"
-                  />
-                </HStack>
-              ))}
-              <Button
-                size="sm"
-                leftIcon={<AddIcon />}
-                onClick={() =>
-                  setNewPackage((prev:any) => ({
-                    ...prev,
-                    products: [...prev.products, { id: '', name: '', quantity: 1 }],
-                  }))
-                }
-                colorScheme="green"
-              >
-                Add Product
-              </Button>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={handleSaveNewPackage}>
-              Save
-            </Button>
-            <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>
-              Cancel
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {/* Modify Package Modal */}
-      <Modal
-        isOpen={isModifyModalOpen}
-        onClose={() => setIsModifyModalOpen(false)}
-      >
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Modify Package</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <Input
-                placeholder="Package Name"
-                value={updatedPackage?.name || ''}
-                onChange={(e) =>
-                  setUpdatedPackage((prev:any) => ({
-                    ...prev,
-                    name: e.target.value,
-                  }))
-                }
-              />
-              <Input
-                placeholder="Package ID Code"
-                value={updatedPackage?.idCode || ''}
-                onChange={(e) =>
-                  setUpdatedPackage((prev:any) => ({
-                    ...prev,
-                    idCode: e.target.value,
-                  }))
-                }
-              />
-              <Text fontSize="lg" fontWeight="bold" mt="4">
-                Products
-              </Text>
-              {updatedPackage?.products.map((product:any, index:any) => (
-                <HStack key={index} spacing={4} width="100%">
-                  <Input
-                    placeholder="Product Name"
-                    value={product.name}
-                    onChange={(e) =>
-                      setUpdatedPackage((prev:any) => ({
-                        ...prev,
-                        products: prev.products.map((p:any, i:any) =>
-                          i === index ? { ...p, name: e.target.value } : p
-                        ),
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Product ID"
-                    value={product.id}
-                    onChange={(e) =>
-                      setUpdatedPackage((prev:any) => ({
-                        ...prev,
-                        products: prev.products.map((p:any, i:any) =>
-                          i === index ? { ...p, id: e.target.value } : p
-                        ),
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="Quantity"
-                    type="number"
-                    value={product.quantity}
-                    onChange={(e) =>
-                      setUpdatedPackage((prev:any) => ({
-                        ...prev,
-                        products: prev.products.map((p:any, i:any) =>
-                          i === index ? { ...p, quantity: +e.target.value } : p
-                        ),
-                      }))
-                    }
-                  />
-                  <IconButton
-                    icon={<DeleteIcon />}
-                    colorScheme="red"
-                    onClick={() =>
-                      setUpdatedPackage((prev:any) => ({
-                        ...prev,
-                        products: prev.products.filter((_:any, i:any) => i !== index),
-                      }))
-                    }
-                    aria-label="Remove Product"
-                  />
-                </HStack>
-              ))}
-              <Button
-                size="sm"
-                leftIcon={<AddIcon />}
-                onClick={() =>
-                  setUpdatedPackage((prev:any) => ({
-                    ...prev,
-                    products: [...prev.products, { id: '', name: '', quantity: 1 }],
-                  }))
-                }
-                colorScheme="green"
-              >
-                Add Product
-              </Button>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={handleSaveModifiedPackage}>
-              Save Changes
-            </Button>
-            <Button variant="ghost" onClick={() => setIsModifyModalOpen(false)}>
-              Cancel
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </Box>
   );
 }
