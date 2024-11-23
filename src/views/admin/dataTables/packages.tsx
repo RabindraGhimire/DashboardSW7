@@ -47,9 +47,18 @@ export default function PackagesDashboard() {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [newPackage, setNewPackage] = useState({
     id: '',
+    parentEventId: '',
+    archived: false,
     title: '',
+    pickupPointIds: [], // Default as an empty array
+    features: [], // Default as an empty array
     shortDescription: '',
+    longDescription: '',
+    images: [], // Default as an empty array
+    transparentImages: false, // Default as false
+    options: [], // Default as an empty array
   });
+  
   const [editPackage, setEditPackage] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
@@ -69,7 +78,20 @@ export default function PackagesDashboard() {
         options: "test",
       };
       //setPackages([...packages, completePackage]);
-      setNewPackage({ id: '', title: '', shortDescription: '' });
+      setNewPackage({
+        id: '',
+        parentEventId: '',
+        archived: false,
+        title: '',
+        pickupPointIds: [], // Reset to empty array
+        features: [], // Reset to empty array
+        shortDescription: '',
+        longDescription: '',
+        images: [], // Reset to empty array
+        transparentImages: false, // Reset to false
+        options: [], // Reset to empty array
+      });
+      
       onCreateClose();
       toast({
         title: 'Package created.',
@@ -257,26 +279,87 @@ export default function PackagesDashboard() {
           <ModalHeader>Create New Package</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <VStack spacing="4">
-              <Input
-                placeholder="Package ID"
-                value={newPackage.id}
-                onChange={(e) => setNewPackage({ ...newPackage, id: e.target.value })}
-              />
-              <Input
-                placeholder="Package Title"
-                value={newPackage.title}
-                onChange={(e) => setNewPackage({ ...newPackage, title: e.target.value })}
-              />
-              <Input
-                placeholder="Short Description"
-                value={newPackage.shortDescription}
-                onChange={(e) =>
-                  setNewPackage({ ...newPackage, shortDescription: e.target.value })
-                }
-              />
-            </VStack>
-          </ModalBody>
+  <VStack spacing="4">
+    <Input
+      placeholder="Package ID"
+      value={newPackage.id}
+      onChange={(e) => setNewPackage({ ...newPackage, id: e.target.value })}
+    />
+    <Input
+      placeholder="Parent Event ID"
+      value={newPackage.parentEventId || ''}
+      onChange={(e) =>
+        setNewPackage({ ...newPackage, parentEventId: e.target.value })
+      }
+    />
+    <Input
+      placeholder="Package Title"
+      value={newPackage.title}
+      onChange={(e) => setNewPackage({ ...newPackage, title: e.target.value })}
+    />
+    <Input
+      placeholder="Short Description"
+      value={newPackage.shortDescription}
+      onChange={(e) =>
+        setNewPackage({ ...newPackage, shortDescription: e.target.value })
+      }
+    />
+    <Input
+      placeholder="Long Description"
+      value={newPackage.longDescription || ''}
+      onChange={(e) =>
+        setNewPackage({ ...newPackage, longDescription: e.target.value })
+      }
+    />
+    <Input
+      placeholder="Pickup Points (comma-separated)"
+      value={newPackage.pickupPointIds?.join(', ') || ''}
+      onChange={(e) =>
+        setNewPackage({
+          ...newPackage,
+          pickupPointIds: e.target.value.split(',').map((s) => s.trim()),
+        })
+      }
+    />
+    <Input
+      placeholder="Features (comma-separated)"
+      value={newPackage.features?.join(', ') || ''}
+      onChange={(e) =>
+        setNewPackage({
+          ...newPackage,
+          features: e.target.value.split(',').map((s) => s.trim()),
+        })
+      }
+    />
+    <Input
+      placeholder="Images (comma-separated URLs)"
+      value={newPackage.images?.join(', ') || ''}
+      onChange={(e) =>
+        setNewPackage({
+          ...newPackage,
+          images: e.target.value.split(',').map((s) => s.trim()),
+        })
+      }
+    />
+    <Flex align="center" justify="space-between" w="100%">
+      <Text>Transparent Images:</Text>
+      <Input
+        type="checkbox"
+        checked={newPackage.transparentImages || false}
+        onChange={(e) =>
+          setNewPackage({
+            ...newPackage,
+            transparentImages: e.target.checked,
+          })
+        }
+      />
+    </Flex>
+    <Text fontSize="sm" color="gray.500">
+      Options can be added later in the detailed package view.
+    </Text>
+  </VStack>
+</ModalBody>
+
           <ModalFooter>
             <Button colorScheme="blue" onClick={handleCreatePackage}>
               Create
