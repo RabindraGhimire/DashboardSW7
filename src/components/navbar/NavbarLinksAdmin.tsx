@@ -119,7 +119,7 @@ export default function HeaderLinks({ onOpen, secondary, fixed }: HeaderLinksPro
 					</Flex>
 				</MenuList>
 			</Menu>
-			<Button
+			{/* <Button
 				variant="no-hover"
 				bg="transparent"
 				p="0px"
@@ -136,7 +136,7 @@ export default function HeaderLinks({ onOpen, secondary, fixed }: HeaderLinksPro
 					color={navbarIcon}
 					as={colorMode === 'light' ? IoMdMoon : IoMdSunny}
 				/>
-			</Button>
+			</Button> */}
 			{/* Example button to demonstrate onOpen functionality */}
 			{/* <Button size="sm" ml="4" onClick={onOpen}>
 				Open Sidebar
