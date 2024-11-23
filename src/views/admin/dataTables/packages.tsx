@@ -45,9 +45,49 @@ const packageEarnings = {
 export default function PackagesDashboard() {
   const [packages, setPackages] = useState(initialPackages);
   const [selectedPackage, setSelectedPackage] = useState(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [newPackage, setNewPackage] = useState({
+    id: '',
+    title: '',
+    shortDescription: '',
+  });
   const [editPackage, setEditPackage] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
   const toast = useToast();
+
+  const handleCreatePackage = () => {
+    if (newPackage.id && newPackage.title && newPackage.shortDescription) {
+      const completePackage = {
+        ...newPackage,
+        parentEventId: 'DEFAULT-EVENT',
+        archived: false,
+        pickupPointIds: "test",
+        features: "test",
+        longDescription: '',
+        images: "test",
+        transparentImages: false,
+        options: "test",
+      };
+      //setPackages([...packages, completePackage]);
+      setNewPackage({ id: '', title: '', shortDescription: '' });
+      onCreateClose();
+      toast({
+        title: 'Package created.',
+        description: `Package ${newPackage.title} has been added.`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: 'Error creating package.',
+        description: 'Please fill in all required fields.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   const handleRemovePackage = (id:any) => {
     setPackages(packages.filter((pkg) => pkg.id !== id));
@@ -91,9 +131,14 @@ export default function PackagesDashboard() {
           maxHeight="600px"
           gridColumn={{ base: 'span 12', md: 'span 3' }}
         >
-          <Text fontSize="lg" fontWeight="bold" mb="4">
-            All Packages
-          </Text>
+          <Flex justify="space-between" align="center" mb="4">
+            <Text fontSize="lg" fontWeight="bold">
+              All Packages
+            </Text>
+            <Button size="sm" colorScheme="blue" onClick={onCreateOpen}>
+              Create Package
+            </Button>
+          </Flex>
           {packages.map((pkg) => (
             <Flex
               key={pkg.id}
@@ -204,6 +249,73 @@ export default function PackagesDashboard() {
           </SimpleGrid>
         </VStack>
       </SimpleGrid>
+
+      {/* Create Package Modal */}
+      <Modal isOpen={isCreateOpen} onClose={onCreateClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Create New Package</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing="4">
+              <Input
+                placeholder="Package ID"
+                value={newPackage.id}
+                onChange={(e) => setNewPackage({ ...newPackage, id: e.target.value })}
+              />
+              <Input
+                placeholder="Package Title"
+                value={newPackage.title}
+                onChange={(e) => setNewPackage({ ...newPackage, title: e.target.value })}
+              />
+              <Input
+                placeholder="Short Description"
+                value={newPackage.shortDescription}
+                onChange={(e) =>
+                  setNewPackage({ ...newPackage, shortDescription: e.target.value })
+                }
+              />
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" onClick={handleCreatePackage}>
+              Create
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Modify Package Modal */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Modify Package</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing="4">
+              <Input
+                placeholder="Package Title"
+                value={editPackage?.title || ''}
+                onChange={(e) =>
+                  setEditPackage({ ...editPackage, title: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Short Description"
+                value={editPackage?.shortDescription || ''}
+                onChange={(e) =>
+                  setEditPackage({ ...editPackage, shortDescription: e.target.value })
+                }
+              />
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" onClick={handleModifyPackage}>
+              Save Changes
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }
