@@ -37,12 +37,12 @@ const routes = [
     path: '/default',
     icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
     component: <MainDashboard />,
-    isPrivate: true,
+    isPrivate: false,
   },
   {
     name: 'Users',
     layout: '/admin',
-    path: '/nft-marketplace',
+    path: '/users',
     icon: (
       <Icon
         as={MdGroup}
@@ -57,7 +57,7 @@ const routes = [
   {
     name: 'Products',
     layout: '/admin',
-    path: '/data-tables',
+    path: '/products',
     icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
     isPrivate: true,
@@ -68,7 +68,7 @@ const routes = [
     path: '/packages',
     icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
     component: <Packages />,
-    isPrivate: true,
+    isPrivate: false,
   },
   {
     name: 'Orders',
