@@ -13,9 +13,21 @@ import {
     Fade,
     Collapse,
     Button,
-    Progress,
+    useDisclosure,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalCloseButton,
+    ModalBody,
+    ModalFooter,
+    FormControl,
+    FormLabel,
+    Input,
+    Textarea,
+    Spinner, // Add Spinner for loading state
 } from '@chakra-ui/react';
-import { InfoIcon } from '@chakra-ui/icons';
+import { InfoIcon, EditIcon } from '@chakra-ui/icons';
 import { FiImage } from 'react-icons/fi';
 import DevelopmentTable from 'views/admin/dataTables/components/DevelopmentTable'; // Assuming this component exists
 import tableDataDevelopment from 'views/admin/dataTables/variables/tableDataDevelopment'; // Products data
@@ -27,10 +39,14 @@ export default function Settings() {
     const [viewProductTypes, setViewProductTypes] = useState<boolean>(false); // Toggle for table view
     const [showFullDescription, setShowFullDescription] = useState<boolean>(false); // State for description toggle
     const [productTypes, setProductTypes] = useState<any[]>([]); // State for product types
+    const [isLoading, setIsLoading] = useState<boolean>(false); // Loading state for API call
+    const { isOpen, onOpen, onClose } = useDisclosure(); // Modal state for editing
+    const [editFormData, setEditFormData] = useState<any>({}); // Form data for editing
 
     // Fetch product types from API
     useEffect(() => {
         if (viewProductTypes) {
+            setIsLoading(true); // Set loading state to true
             axios
                 .get('http://127.0.0.1:3000/v1/product_type')
                 .then((response) => {
@@ -42,7 +58,12 @@ export default function Settings() {
                 })
                 .catch((error) => {
                     console.error('Error fetching product types:', error);
+                })
+                .finally(() => {
+                    setIsLoading(false); // Set loading state to false after API call completes
                 });
+        } else {
+            setProductTypes([]); // Clear product types when switching back to products
         }
     }, [viewProductTypes]);
 
@@ -50,6 +71,50 @@ export default function Settings() {
     const handleItemClick = (item: any) => {
         setSelectedItem(item);
         setShowFullDescription(false);
+    };
+
+    // Function to open the edit modal
+    const handleEditClick = () => {
+        setEditFormData(selectedItem); // Populate the form with the selected item's data
+        onOpen(); // Open the modal
+    };
+
+    // Function to handle form input changes
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setEditFormData({
+            ...editFormData,
+            [name]: value,
+        });
+    };
+
+    // Function to handle archive toggle in the modal
+    const handleArchiveToggleInModal = () => {
+        setEditFormData({
+            ...editFormData,
+            archived: !editFormData.archived,
+        });
+    };
+
+    // Function to save changes
+    const handleSaveChanges = () => {
+        axios
+            .put(`http://127.0.0.1:3000/v1/product_type/${editFormData.ID}`, editFormData)
+            .then((response) => {
+                if (response.data.code === 200) {
+                    // Update the selected item and product types list
+                    setSelectedItem(editFormData);
+                    setProductTypes((prev) =>
+                        prev.map((item) => (item.ID === editFormData.ID ? editFormData : item))
+                    );
+                    onClose(); // Close the modal
+                } else {
+                    console.error('Failed to update product type');
+                }
+            })
+            .catch((error) => {
+                console.error('Error updating product type:', error);
+            });
     };
 
     // Base box styling for containers
@@ -85,10 +150,16 @@ export default function Settings() {
                 {/* Left Box with Table */}
                 <Box {...boxStyles}>
                     {viewProductTypes ? (
-                        <ProductTypeTable
-                            tableData={productTypes}
-                            onProductClick={handleItemClick}
-                        />
+                        isLoading ? ( // Show spinner while loading
+                            <Flex justify="center" align="center" h="200px">
+                                <Spinner size="xl" />
+                            </Flex>
+                        ) : (
+                            <ProductTypeTable
+                                tableData={productTypes}
+                                onProductClick={handleItemClick}
+                            />
+                        )
                     ) : (
                         <DevelopmentTable
                             tableData={tableDataDevelopment}
@@ -106,6 +177,18 @@ export default function Settings() {
                     {selectedItem ? (
                         <Fade in={!!selectedItem}>
                             <VStack spacing={4}>
+                                {/* Edit Icon */}
+                                <Flex justify="flex-end" w="full">
+                                    <Icon
+                                        as={EditIcon}
+                                        boxSize="5"
+                                        color="gray.500"
+                                        cursor="pointer"
+                                        _hover={{ color: 'blue.500' }}
+                                        onClick={handleEditClick}
+                                    />
+                                </Flex>
+
                                 {/* Item Image */}
                                 {selectedItem.image_url ? (
                                     <Image
@@ -137,11 +220,16 @@ export default function Settings() {
                                     {selectedItem.title}
                                 </Text>
 
-                                {/* Expandable Description */}
+                                {/* Short Description */}
+                                <Text color="gray.600" fontSize="md">
+                                    {selectedItem.short_description || 'No short description available.'}
+                                </Text>
+
+                                {/* Expandable Long Description */}
                                 <Box textAlign="left" w="full">
                                     <Collapse startingHeight={60} in={showFullDescription}>
                                         <Text color="gray.600" fontSize="md">
-                                            {selectedItem.long_description || 'No description available.'}
+                                            {selectedItem.long_description || 'No long description available.'}
                                         </Text>
                                     </Collapse>
                                     <Button
@@ -165,6 +253,19 @@ export default function Settings() {
                                         <InfoIcon ml="8px" color="gray.500" />
                                     </Tooltip>
                                 </Flex>
+
+                                {/* Additional Fields */}
+                                <VStack spacing={2} align="start" w="full">
+                                    <Text fontSize="sm" color="gray.500">
+                                        <strong>Created At:</strong> {new Date(selectedItem.CreatedAt).toLocaleString()}
+                                    </Text>
+                                    <Text fontSize="sm" color="gray.500">
+                                        <strong>Updated At:</strong> {new Date(selectedItem.UpdatedAt).toLocaleString()}
+                                    </Text>
+                                    <Text fontSize="sm" color="gray.500">
+                                        <strong>Transparent Image:</strong> {selectedItem.transparent_image ? 'Yes' : 'No'}
+                                    </Text>
+                                </VStack>
                             </VStack>
                         </Fade>
                     ) : (
@@ -174,6 +275,62 @@ export default function Settings() {
                     )}
                 </Box>
             </SimpleGrid>
+
+            {/* Edit Modal */}
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Edit Product Type</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <FormControl>
+                            <FormLabel>Title</FormLabel>
+                            <Input
+                                name="title"
+                                value={editFormData.title || ''}
+                                onChange={handleInputChange}
+                            />
+                        </FormControl>
+                        <FormControl mt={4}>
+                            <FormLabel>Short Description</FormLabel>
+                            <Input
+                                name="short_description"
+                                value={editFormData.short_description || ''}
+                                onChange={handleInputChange}
+                            />
+                        </FormControl>
+                        <FormControl mt={4}>
+                            <FormLabel>Long Description</FormLabel>
+                            <Textarea
+                                name="long_description"
+                                value={editFormData.long_description || ''}
+                                onChange={handleInputChange}
+                            />
+                        </FormControl>
+                        <FormControl mt={4}>
+                            <FormLabel>Archive Status</FormLabel>
+                            <Flex align="center">
+                                <Text mr="10px" fontSize="sm" color="gray.500">
+                                    {editFormData.archived ? 'Archived' : 'Active'}
+                                </Text>
+                                <Switch
+                                    isChecked={!editFormData.archived}
+                                    onChange={handleArchiveToggleInModal}
+                                    colorScheme="green"
+                                />
+                            </Flex>
+                        </FormControl>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button colorScheme="blue" mr={3} onClick={handleSaveChanges}>
+                            Save Changes
+                        </Button>
+                        <Button variant="ghost" onClick={onClose}>
+                            Cancel
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Box>
     );
 }
