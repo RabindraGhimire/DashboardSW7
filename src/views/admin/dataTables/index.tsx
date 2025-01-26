@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     SimpleGrid,
@@ -19,13 +19,32 @@ import { InfoIcon } from '@chakra-ui/icons';
 import { FiImage } from 'react-icons/fi';
 import DevelopmentTable from 'views/admin/dataTables/components/DevelopmentTable'; // Assuming this component exists
 import tableDataDevelopment from 'views/admin/dataTables/variables/tableDataDevelopment'; // Products data
-import tableDataProductTypes from 'views/admin/dataTables/variables/tableDataProductType'; // Product types data
 import ProductTypeTable from './components/ProductTypeTable';
+import axios from 'axios';
 
 export default function Settings() {
     const [selectedItem, setSelectedItem] = useState<any>(null); // Tracks the selected product or product type
     const [viewProductTypes, setViewProductTypes] = useState<boolean>(false); // Toggle for table view
     const [showFullDescription, setShowFullDescription] = useState<boolean>(false); // State for description toggle
+    const [productTypes, setProductTypes] = useState<any[]>([]); // State for product types
+
+    // Fetch product types from API
+    useEffect(() => {
+        if (viewProductTypes) {
+            axios
+                .get('http://127.0.0.1:3000/v1/product_type')
+                .then((response) => {
+                    if (response.data.code === 200) {
+                        setProductTypes(response.data.data);
+                    } else {
+                        console.error('Failed to fetch product types');
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error fetching product types:', error);
+                });
+        }
+    }, [viewProductTypes]);
 
     // Function to handle item click (product or product type)
     const handleItemClick = (item: any) => {
@@ -65,19 +84,18 @@ export default function Settings() {
             <SimpleGrid columns={{ base: 1, lg: 2 }} spacing="20px">
                 {/* Left Box with Table */}
                 <Box {...boxStyles}>
-    {viewProductTypes ? (
-        <ProductTypeTable
-            tableData={tableDataProductTypes}
-            onProductClick={handleItemClick}
-        />
-    ) : (
-        <DevelopmentTable
-            tableData={tableDataDevelopment}
-            onProductClick={handleItemClick}
-        />
-    )}
-</Box>
-
+                    {viewProductTypes ? (
+                        <ProductTypeTable
+                            tableData={productTypes}
+                            onProductClick={handleItemClick}
+                        />
+                    ) : (
+                        <DevelopmentTable
+                            tableData={tableDataDevelopment}
+                            onProductClick={handleItemClick}
+                        />
+                    )}
+                </Box>
 
                 {/* Right Box with Details */}
                 <Box
@@ -89,10 +107,10 @@ export default function Settings() {
                         <Fade in={!!selectedItem}>
                             <VStack spacing={4}>
                                 {/* Item Image */}
-                                {selectedItem.image ? (
+                                {selectedItem.image_url ? (
                                     <Image
-                                        src={selectedItem.image}
-                                        alt={selectedItem.name}
+                                        src={selectedItem.image_url}
+                                        alt={selectedItem.title}
                                         borderRadius="md"
                                         boxShadow="md"
                                         maxW="200px"
@@ -116,14 +134,14 @@ export default function Settings() {
 
                                 {/* Item Name */}
                                 <Text fontSize="lg" fontWeight="bold">
-                                    {selectedItem.name}
+                                    {selectedItem.title}
                                 </Text>
 
                                 {/* Expandable Description */}
                                 <Box textAlign="left" w="full">
-                                    <Collapse startingHeight={40} in={showFullDescription}>
+                                    <Collapse startingHeight={60} in={showFullDescription}>
                                         <Text color="gray.600" fontSize="md">
-                                            {selectedItem.description || 'No description available.'}
+                                            {selectedItem.long_description || 'No description available.'}
                                         </Text>
                                     </Collapse>
                                     <Button
@@ -135,28 +153,13 @@ export default function Settings() {
                                     </Button>
                                 </Box>
 
-                                {/* Progress Bar (only for products) */}
-                                {!viewProductTypes && selectedItem.progress !== undefined && (
-                                    <Box w="full" textAlign="left">
-                                        <Text fontSize="sm" fontWeight="semibold" mb="2">
-                                            Manufacturing Progress:
-                                        </Text>
-                                        <Progress
-                                            value={selectedItem.progress}
-                                            size="sm"
-                                            colorScheme="blue"
-                                            borderRadius="md"
-                                        />
-                                    </Box>
-                                )}
-
                                 {/* Item Status */}
                                 <Flex align="center" justify="center">
                                     <Tag
                                         size="lg"
-                                        colorScheme={selectedItem.status === 'Ready to Order' ? 'green' : selectedItem.status === 'In Repair' ? 'orange' : 'red'}
+                                        colorScheme={selectedItem.archived ? 'red' : 'green'}
                                     >
-                                        {selectedItem.status}
+                                        {selectedItem.archived ? 'Archived' : 'Active'}
                                     </Tag>
                                     <Tooltip label="Current status of the item" fontSize="sm">
                                         <InfoIcon ml="8px" color="gray.500" />

@@ -116,19 +116,19 @@ import {
           </Flex>
         ),
       }),
-      columnHelper.accessor("shortDescription", {
-        id: "shortDescription",
-        header: () => (
-          <Text fontSize={{ sm: "10px", lg: "12px" }} color="gray.400">
-            SHORT DESCRIPTION
-          </Text>
-        ),
-        cell: (info) => (
-          <Text color={textColor} fontSize="sm" fontWeight="700">
-            {info.getValue()}
-          </Text>
-        ),
-      }),
+      // columnHelper.accessor("shortDescription", {
+      //   id: "shortDescription",
+      //   header: () => (
+      //     <Text fontSize={{ sm: "10px", lg: "12px" }} color="gray.400">
+      //       SHORT DESCRIPTION
+      //     </Text>
+      //   ),
+      //   cell: (info) => (
+      //     <Text color={textColor} fontSize="sm" fontWeight="700">
+      //       {info.getValue()}
+      //     </Text>
+      //   ),
+      // }),
       columnHelper.accessor("archived", {
         id: "archived",
         header: () => (

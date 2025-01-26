@@ -24,6 +24,7 @@ import {
   Input,
   Textarea,
   useDisclosure,
+  Switch,
 } from "@chakra-ui/react";
 
 const Dashboard = () => {
@@ -36,8 +37,10 @@ const Dashboard = () => {
     long_description: "",
     image_url: "",
     pickup_points: [],
+    archived: false,
+    transparent_image: false,
   });
-
+  const [pickupPoints, setPickupPoints] = useState([]);
   const rowsPerPage = 5;
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -51,6 +54,15 @@ const Dashboard = () => {
         }
       })
       .catch((error) => console.error("Error fetching packages:", error));
+
+    fetch("http://127.0.0.1:3000/v1/pickup-points")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.code === 200) {
+          setPickupPoints(data.data);
+        }
+      })
+      .catch((error) => console.error("Error fetching pickup points:", error));
   }, []);
 
   // Pagination calculations
@@ -73,41 +85,49 @@ const Dashboard = () => {
     setNewPackage({ ...newPackage, [name]: value });
   };
 
-  // Add a new package
-  // Add a new package
-const handleAddPackage = () => {
-  // Validate the form data (optional, but recommended)
-  if (!newPackage.title || !newPackage.short_description || !newPackage.image_url) {
-    alert("Please fill all required fields.");
-    return;
-  }
+  // Handle archived toggle
+  const handleArchivedToggle = () => {
+    setNewPackage({ ...newPackage, archived: !newPackage.archived });
+  };
 
-  // Send new package data to the backend
-  fetch("http://127.0.0.1:3000/v1/packages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      title: newPackage.title,
-      short_description: newPackage.short_description,
-      long_description: newPackage.long_description,
-      image_url: newPackage.image_url,
-      pickup_points: newPackage.pickup_points,  // Ensure this matches what the backend expects
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.code === 200) {
-        setPackages((prevPackages) => [data.data, ...prevPackages]);
-        onClose();
-      } else {
-        alert("Error creating package: " + data.message);
-      }
+  // Handle transparent image checkbox
+  const handleTransparentImageToggle = () => {
+    setNewPackage({ ...newPackage, transparent_image: !newPackage.transparent_image });
+  };
+
+  // Add a new package
+  const handleAddPackage = () => {
+    if (!newPackage.title || !newPackage.short_description || !newPackage.image_url) {
+      alert("Please fill all required fields.");
+      return;
+    }
+
+    fetch("http://127.0.0.1:3000/v1/packages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: newPackage.title,
+        short_description: newPackage.short_description,
+        long_description: newPackage.long_description,
+        image_url: newPackage.image_url,
+        pickup_points: newPackage.pickup_points,
+        archived: newPackage.archived,
+        transparent_image: newPackage.transparent_image,
+      }),
     })
-    .catch((error) => console.error("Error adding package:", error));
-};
-
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.code === 200) {
+          setPackages((prevPackages) => [data.data, ...prevPackages]);
+          onClose();
+        } else {
+          alert("Error creating package: " + data.message);
+        }
+      })
+      .catch((error) => console.error("Error adding package:", error));
+  };
 
   return (
     <Flex p={6} gap={6} pt={20}>
@@ -261,6 +281,46 @@ const handleAddPackage = () => {
                 name="image_url"
                 value={newPackage.image_url}
                 onChange={handleInputChange}
+              />
+            </FormControl>
+
+            {/* Pickup Points */}
+            {/* <FormControl mb={4}>
+              <FormLabel>Pickup Points</FormLabel>
+              <select
+                name="pickup_points"
+                multiple
+                onChange={(e) => {
+                  const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+                  setNewPackage({ ...newPackage, pickup_points: selectedOptions });
+                }}
+                value={newPackage.pickup_points}
+              >
+                {pickupPoints.map((point) => (
+                  <option key={point.ID} value={point.ID}>
+                    {point.address}
+                  </option>
+                ))}
+              </select>
+            </FormControl> */}
+
+            {/* Archived Toggle */}
+            <FormControl display="flex" alignItems="center" mb={4}>
+              <FormLabel mb={0}>Archived</FormLabel>
+              <Switch
+                isChecked={newPackage.archived}
+                onChange={handleArchivedToggle}
+                ml={2}
+              />
+            </FormControl>
+
+            {/* Transparent Image Checkbox */}
+            <FormControl display="flex" alignItems="center" mb={4}>
+              <FormLabel mb={0}>Transparent Image</FormLabel>
+              <Switch
+                isChecked={newPackage.transparent_image}
+                onChange={handleTransparentImageToggle}
+                ml={2}
               />
             </FormControl>
           </ModalBody>
