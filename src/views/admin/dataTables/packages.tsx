@@ -568,201 +568,205 @@ const PackagesTable = () => {
 
                 {/* Add Rent Prices */}
                 <FormControl mt={4}>
-                  <FormLabel>Rent Prices</FormLabel>
-                  {option.rent_prices?.map((rentPrice, rentIndex) => (
-                    <Box key={rentIndex} ml={4} mb={2}>
-                      <Input
-                        name="hours"
-                        value={rentPrice.hours}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            options: formData.options.map((opt, index) =>
-                              index === optionIndex
-                                ? {
-                                    ...opt,
-                                    rent_prices: opt.rent_prices?.map((rp, i) =>
-                                      i === rentIndex
-                                        ? { ...rp, hours: parseInt(e.target.value, 10) }
-                                        : rp
-                                    ),
-                                  }
-                                : opt
-                            ),
-                          })
-                        }
-                        placeholder="Enter hours"
-                      />
-                      <Input
-                        name="price"
-                        value={rentPrice.price}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            options: formData.options.map((opt, index) =>
-                              index === optionIndex
-                                ? {
-                                    ...opt,
-                                    rent_prices: opt.rent_prices?.map((rp, i) =>
-                                      i === rentIndex
-                                        ? { ...rp, price: parseFloat(e.target.value) }
-                                        : rp
-                                    ),
-                                  }
-                                : opt
-                            ),
-                          })
-                        }
-                        placeholder="Enter price"
-                      />
-                    </Box>
-                  ))}
-                  <Button
-                    mt={2}
-                    colorScheme="teal"
-                    onClick={() => addRentPrice(optionIndex)}
-                  >
-                    Add Rent Price
-                  </Button>
-                </FormControl>
+  <FormLabel>Rent Prices</FormLabel>
+  {option.rent_prices?.map((rentPrice, rentIndex) => (
+    <Flex key={rentIndex} gap={2} mb={2}>
+      <Input
+        name="hours"
+        value={rentPrice.hours}
+        onChange={(e) =>
+          setFormData({
+            ...formData,
+            options: formData.options.map((opt, index) =>
+              index === optionIndex
+                ? {
+                    ...opt,
+                    rent_prices: opt.rent_prices?.map((rp, i) =>
+                      i === rentIndex
+                        ? { ...rp, hours: parseInt(e.target.value, 10) }
+                        : rp
+                    ),
+                  }
+                : opt
+            ),
+          })
+        }
+        placeholder="Enter hours (e.g., 24)"
+      />
+      <Input
+        name="price"
+        value={rentPrice.price}
+        onChange={(e) =>
+          setFormData({
+            ...formData,
+            options: formData.options.map((opt, index) =>
+              index === optionIndex
+                ? {
+                    ...opt,
+                    rent_prices: opt.rent_prices?.map((rp, i) =>
+                      i === rentIndex
+                        ? { ...rp, price: parseFloat(e.target.value) }
+                        : rp
+                    ),
+                  }
+                : opt
+            ),
+          })
+        }
+        placeholder="Enter price (e.g., 50.0)"
+      />
+    </Flex>
+  ))}
+  <Button
+    mt={2}
+    colorScheme="teal"
+    onClick={() => addRentPrice(optionIndex)}
+  >
+    Add Rent Price
+  </Button>
+</FormControl>
 
                 {/* Add Accessories */}
                 <FormControl mt={4}>
-                  <FormLabel>Accessories</FormLabel>
-                  {option.accessories.map((accessory, accIndex) => (
-                    <Box key={accIndex} ml={4} mb={2}>
-                      <Input
-                        name="product_type_id"
-                        value={accessory.product_type_id}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            options: formData.options.map((opt, index) =>
-                              index === optionIndex
-                                ? {
-                                    ...opt,
-                                    accessories: opt.accessories.map((acc, i) =>
-                                      i === accIndex
-                                        ? {
-                                            ...acc,
-                                            product_type_id: parseInt(e.target.value, 10),
-                                          }
-                                        : acc
-                                    ),
-                                  }
-                                : opt
-                            ),
-                          })
-                        }
-                        placeholder="Enter product type ID"
-                      />
-                      <Input
-                        name="buy_price"
-                        value={accessory.buy_price}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            options: formData.options.map((opt, index) =>
-                              index === optionIndex
-                                ? {
-                                    ...opt,
-                                    accessories: opt.accessories.map((acc, i) =>
-                                      i === accIndex
-                                        ? { ...acc, buy_price: parseFloat(e.target.value) }
-                                        : acc
-                                    ),
-                                  }
-                                : opt
-                            ),
-                          })
-                        }
-                        placeholder="Enter buy price"
-                      />
-                      <Input
-                        name="allowed_quantity"
-                        value={accessory.allowed_quantity}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            options: formData.options.map((opt, index) =>
-                              index === optionIndex
-                                ? {
-                                    ...opt,
-                                    accessories: opt.accessories.map((acc, i) =>
-                                      i === accIndex
-                                        ? {
-                                            ...acc,
-                                            allowed_quantity: parseInt(e.target.value, 10),
-                                          }
-                                        : acc
-                                    ),
-                                  }
-                                : opt
-                            ),
-                          })
-                        }
-                        placeholder="Enter allowed quantity"
-                      />
-                      <Input
-                        name="payment_type"
-                        value={accessory.payment_type}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            options: formData.options.map((opt, index) =>
-                              index === optionIndex
-                                ? {
-                                    ...opt,
-                                    accessories: opt.accessories.map((acc, i) =>
-                                      i === accIndex
-                                        ? {
-                                            ...acc,
-                                            payment_type: parseInt(e.target.value, 10),
-                                          }
-                                        : acc
-                                    ),
-                                  }
-                                : opt
-                            ),
-                          })
-                        }
-                        placeholder="Enter payment type"
-                      />
-                      <Input
-                        name="selection_type"
-                        value={accessory.selection_type}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            options: formData.options.map((opt, index) =>
-                              index === optionIndex
-                                ? {
-                                    ...opt,
-                                    accessories: opt.accessories.map((acc, i) =>
-                                      i === accIndex
-                                        ? {
-                                            ...acc,
-                                            selection_type: parseInt(e.target.value, 10),
-                                          }
-                                        : acc
-                                    ),
-                                  }
-                                : opt
-                            ),
-                          })
-                        }
-                        placeholder="Enter selection type"
-                      />
-                    </Box>
-                  ))}
-                  <Button
-                    mt={2}
-                    colorScheme="teal"
-                    onClick={() => addAccessory(optionIndex)}
-                  >
-                    Add Accessory
-                  </Button>
-                </FormControl>
+  <FormLabel>Accessories</FormLabel>
+  {option.accessories.map((accessory, accIndex) => (
+    <Box key={accIndex} mb={4} p={4} borderWidth="1px" borderRadius="lg" bg="gray.50">
+      <Flex gap={2} mb={2}>
+        <Input
+          name="product_type_id"
+          value={accessory.product_type_id}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              options: formData.options.map((opt, index) =>
+                index === optionIndex
+                  ? {
+                      ...opt,
+                      accessories: opt.accessories.map((acc, i) =>
+                        i === accIndex
+                          ? {
+                              ...acc,
+                              product_type_id: parseInt(e.target.value, 10),
+                            }
+                          : acc
+                      ),
+                    }
+                  : opt
+              ),
+            })
+          }
+          placeholder="Enter product type ID (e.g., 2)"
+        />
+        <Input
+          name="buy_price"
+          value={accessory.buy_price}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              options: formData.options.map((opt, index) =>
+                index === optionIndex
+                  ? {
+                      ...opt,
+                      accessories: opt.accessories.map((acc, i) =>
+                        i === accIndex
+                          ? { ...acc, buy_price: parseFloat(e.target.value) }
+                          : acc
+                      ),
+                    }
+                  : opt
+              ),
+            })
+          }
+          placeholder="Enter buy price (e.g., 50.0)"
+        />
+      </Flex>
+      <Flex gap={2} mb={2}>
+        <Input
+          name="allowed_quantity"
+          value={accessory.allowed_quantity}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              options: formData.options.map((opt, index) =>
+                index === optionIndex
+                  ? {
+                      ...opt,
+                      accessories: opt.accessories.map((acc, i) =>
+                        i === accIndex
+                          ? {
+                              ...acc,
+                              allowed_quantity: parseInt(e.target.value, 10),
+                            }
+                          : acc
+                      ),
+                    }
+                  : opt
+              ),
+            })
+          }
+          placeholder="Enter allowed quantity (e.g., 10)"
+        />
+        <Input
+          name="payment_type"
+          value={accessory.payment_type}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              options: formData.options.map((opt, index) =>
+                index === optionIndex
+                  ? {
+                      ...opt,
+                      accessories: opt.accessories.map((acc, i) =>
+                        i === accIndex
+                          ? {
+                              ...acc,
+                              payment_type: parseInt(e.target.value, 10),
+                            }
+                          : acc
+                      ),
+                    }
+                  : opt
+              ),
+            })
+          }
+          placeholder="Enter payment type (e.g., 0)"
+        />
+        <Input
+          name="selection_type"
+          value={accessory.selection_type}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              options: formData.options.map((opt, index) =>
+                index === optionIndex
+                  ? {
+                      ...opt,
+                      accessories: opt.accessories.map((acc, i) =>
+                        i === accIndex
+                          ? {
+                              ...acc,
+                              selection_type: parseInt(e.target.value, 10),
+                            }
+                          : acc
+                      ),
+                    }
+                  : opt
+              ),
+            })
+          }
+          placeholder="Enter selection type (e.g., 1)"
+        />
+      </Flex>
+    </Box>
+  ))}
+  <Button
+    mt={2}
+    colorScheme="teal"
+    onClick={() => addAccessory(optionIndex)}
+  >
+    Add Accessory
+  </Button>
+</FormControl>
               </Box>
             ))}
 

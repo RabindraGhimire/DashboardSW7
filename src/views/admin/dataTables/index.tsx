@@ -48,7 +48,7 @@ export default function Settings() {
         if (viewProductTypes) {
             setIsLoading(true); // Set loading state to true
             axios
-                .get('http://127.0.0.1:3000/v1/product_type')
+                .get('http://127.0.0.1:3000/v1/producttype')
                 .then((response) => {
                     if (response.data.code === 200) {
                         setProductTypes(response.data.data);
