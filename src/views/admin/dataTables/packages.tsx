@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import {
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
-  Button,
   Box,
+  Button,
   Flex,
   Image,
+  Table,
+  TableContainer,
+  Tbody,
+  Td,
   Text,
+  Th,
+  Thead,
+  Tr,
+  Divider,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -23,319 +24,441 @@ import {
   FormLabel,
   Input,
   Textarea,
-  useDisclosure,
-  Switch,
+  Checkbox,
 } from "@chakra-ui/react";
+import Select from "react-select";
 
-const Dashboard = () => {
+// Define interfaces for types
+interface Option {
+  ID: string;
+  available_quantity: number;
+  allowed_quantity: number;
+  accessories: Accessory[];
+}
+
+interface Accessory {
+  ID: string;
+  name: string;
+  available_quantity: number;
+  allowed_quantity: number;
+}
+
+interface ProductType {
+  type: string;
+  accessories: string[];
+}
+
+interface FormData {
+  archived: boolean;
+  title: string;
+  pickupPoints: string;
+  features: string;
+  shortDescription: string;
+  longDescription: string;
+  imageUrl: string;
+  transparentImage: boolean;
+  productTypes: ProductType[];
+}
+
+const PackagesTable = () => {
   const [packages, setPackages] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedPackage, setSelectedPackage] = useState(null);
-  const [newPackage, setNewPackage] = useState({
-    title: "",
-    short_description: "",
-    long_description: "",
-    image_url: "",
-    pickup_points: [],
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Modal fields
+  const [formData, setFormData] = useState<FormData>({
     archived: false,
-    transparent_image: false,
+    title: "",
+    pickupPoints: "",
+    features: "",
+    shortDescription: "",
+    longDescription: "",
+    imageUrl: "",
+    transparentImage: false,
+    productTypes: [],
   });
-  const [pickupPoints, setPickupPoints] = useState([]);
-  const rowsPerPage = 5;
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
-  // Fetch data
+  const [availableAccessories, setAvailableAccessories] = useState<Accessory[][]>([]);
+
+  // Fetch packages data from API
   useEffect(() => {
-    fetch("http://127.0.0.1:3000/v1/packages")
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.code === 200) {
-          setPackages(data.data);
-        }
-      })
-      .catch((error) => console.error("Error fetching packages:", error));
+    const fetchPackages = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          `http://127.0.0.1:3000/v1/packages?page=1&limit=5`
+        );
+        const data = await response.json();
+        setPackages(data.data); // Assuming the API response structure
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching packages:", error);
+        setIsLoading(false);
+      }
+    };
 
-    fetch("http://127.0.0.1:3000/v1/pickup-points")
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.code === 200) {
-          setPickupPoints(data.data);
-        }
-      })
-      .catch((error) => console.error("Error fetching pickup points:", error));
+    fetchPackages();
   }, []);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(packages.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const currentData = packages.slice(startIndex, startIndex + rowsPerPage);
-
-  // Pagination handlers
-  const handlePreviousPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
-  // Handle input changes for new package
-  const handleInputChange = (e:any) => {
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setNewPackage({ ...newPackage, [name]: value });
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  // Handle archived toggle
-  const handleArchivedToggle = () => {
-    setNewPackage({ ...newPackage, archived: !newPackage.archived });
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData((prevData) => ({ ...prevData, [name]: checked }));
   };
 
-  // Handle transparent image checkbox
-  const handleTransparentImageToggle = () => {
-    setNewPackage({ ...newPackage, transparent_image: !newPackage.transparent_image });
+  // Add a new product type
+  const addProductType = () => {
+    setFormData((prevData) => ({
+      ...prevData,
+      productTypes: [
+        ...prevData.productTypes,
+        {
+          type: "",
+          accessories: [],
+        },
+      ],
+    }));
   };
 
-  // Add a new package
-  const handleAddPackage = () => {
-    if (!newPackage.title || !newPackage.short_description || !newPackage.image_url) {
-      alert("Please fill all required fields.");
-      return;
+  // Handle product type change
+  const handleProductTypeChange = async (index: number, selectedOption: any) => {
+    const updatedProductTypes = [...formData.productTypes];
+    updatedProductTypes[index].type = selectedOption.value;
+    setFormData((prevData) => ({
+      ...prevData,
+      productTypes: updatedProductTypes,
+    }));
+
+    // Fetch accessories based on selected product type
+    if (selectedOption.value) {
+      const accessories = await fetchAccessories(selectedOption.value);
+      setAvailableAccessories((prev) => {
+        const newAccessories = [...prev];
+        newAccessories[index] = accessories;
+        return newAccessories;
+      });
     }
+  };
 
-    fetch("http://127.0.0.1:3000/v1/packages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+  // Fetch accessories based on product type
+  const fetchAccessories = async (productType: string) => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:3000/v1/accessories?productType=${productType}`
+      );
+      const data = await response.json();
+      return data.accessories;
+    } catch (error) {
+      console.error("Error fetching accessories:", error);
+      return [];
+    }
+  };
+
+  // Handle accessory selection
+  const handleAccessorySelection = (productTypeIndex: number, accessoryId: string, isChecked: boolean) => {
+    const updatedProductTypes = [...formData.productTypes];
+    if (isChecked) {
+      updatedProductTypes[productTypeIndex].accessories.push(accessoryId);
+    } else {
+      updatedProductTypes[productTypeIndex].accessories = updatedProductTypes[
+        productTypeIndex
+      ].accessories.filter((id: string) => id !== accessoryId);
+    }
+    setFormData((prevData) => ({
+      ...prevData,
+      productTypes: updatedProductTypes,
+    }));
+  };
+
+  // Handle modal form submission
+  const handleSubmit = () => {
+    console.log("Form data submitted:", formData);
+    setIsModalOpen(false);
+  };
+
+  // Product type options
+  const productTypeOptions = [
+    { value: "type1", label: "Type 1" },
+    { value: "type2", label: "Type 2" },
+    { value: "type3", label: "Type 3" },
+  ];
+
+  // Custom styles for react-select
+  const customStyles = {
+    control: (provided: any) => ({
+      ...provided,
+      border: "1px solid #E2E8F0",
+      borderRadius: "6px",
+      minHeight: "40px",
+      boxShadow: "none",
+      "&:hover": {
+        borderColor: "#3182CE",
       },
-      body: JSON.stringify({
-        title: newPackage.title,
-        short_description: newPackage.short_description,
-        long_description: newPackage.long_description,
-        image_url: newPackage.image_url,
-        pickup_points: newPackage.pickup_points,
-        archived: newPackage.archived,
-        transparent_image: newPackage.transparent_image,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.code === 200) {
-          setPackages((prevPackages) => [data.data, ...prevPackages]);
-          onClose();
-        } else {
-          alert("Error creating package: " + data.message);
-        }
-      })
-      .catch((error) => console.error("Error adding package:", error));
+    }),
+    option: (provided: any, state: any) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? "#3182CE" : "white",
+      color: state.isSelected ? "white" : "black",
+      "&:hover": {
+        backgroundColor: "#3182CE",
+        color: "white",
+      },
+    }),
   };
 
   return (
-    <Flex p={6} gap={6} pt={20}>
-      {/* Table Section */}
-      <Box width="60%">
-        {/* Create New Package Button */}
-        <Flex justifyContent="space-between" mb={4}>
-          <Button colorScheme="green" onClick={onOpen}>
-            Create New Package
-          </Button>
-        </Flex>
+    <Box p={4} pt={20}>
+      {/* Top bar with Create New Package button */}
+      <Flex justifyContent="space-between" mb={4}>
+        <Button colorScheme="teal" onClick={() => setIsModalOpen(true)}>
+          Create New Package
+        </Button>
+      </Flex>
 
-        <TableContainer
-          border="1px solid"
-          borderColor="gray.200"
-          rounded="lg"
-          p={4}
-        >
-          <Table variant="simple">
-            <Thead bg="gray.100">
-              <Tr>
-                <Th p={4}>Title</Th>
-                <Th p={4}>Short Description</Th>
-                <Th p={4}>Pickup Points</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {currentData.map((pkg) => (
-                <Tr
-                  key={pkg.ID}
-                  _hover={{ bg: "gray.50", cursor: "pointer" }}
-                  onClick={() => setSelectedPackage(pkg)}
-                >
-                  <Td p={4}>
-                    <Text fontWeight="bold">{pkg.title}</Text>
-                  </Td>
-                  <Td p={4}>{pkg.short_description}</Td>
-                  <Td p={4}>
-                    {pkg.pickup_points.map((point:any) => (
-                      <Box key={point.ID}>
-                        <Text fontSize="sm">{point.address}</Text>
-                      </Box>
-                    ))}
-                  </Td>
+      <Flex gap={4}>
+        {/* Left box: Package list */}
+        <Box w="50%" borderWidth="1px" borderRadius="lg" p={4} overflowY="auto">
+          <TableContainer>
+            <Table variant="simple">
+              <Thead>
+                <Tr>
+                  <Th>Title</Th>
+                  <Th>Description</Th>
+                  <Th>Actions</Th>
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </TableContainer>
+              </Thead>
+              <Tbody>
+                {!isLoading && packages.length > 0 ? (
+                  packages.map((pkg: any) => (
+                    <Tr key={pkg.ID}>
+                      <Td>{pkg.title}</Td>
+                      <Td>{pkg.short_description}</Td>
+                      <Td>
+                        <Button
+                          size="md"
+                          bgGradient="linear(to-r, blue.400, blue.600)"
+                          color="white"
+                          _hover={{
+                            bgGradient: "linear(to-r, blue.500, blue.700)",
+                          }}
+                          _active={{ bg: "blue.700" }}
+                          boxShadow="md"
+                          borderRadius="lg"
+                          onClick={() => setSelectedPackage(pkg)}
+                        >
+                          View Details
+                        </Button>
+                      </Td>
+                    </Tr>
+                  ))
+                ) : (
+                  <Tr>
+                    <Td colSpan={3}>
+                      {isLoading ? "Loading..." : "No packages found."}
+                    </Td>
+                  </Tr>
+                )}
+              </Tbody>
+            </Table>
+          </TableContainer>
+        </Box>
 
-        {/* Pagination Controls */}
-        <Flex justifyContent="space-between" alignItems="center" mt={4}>
-          <Button
-            onClick={handlePreviousPage}
-            isDisabled={currentPage === 1}
-            colorScheme="blue"
-          >
-            Previous
-          </Button>
-          <Text>
-            Page {currentPage} of {totalPages}
-          </Text>
-          <Button
-            onClick={handleNextPage}
-            isDisabled={currentPage === totalPages}
-            colorScheme="blue"
-          >
-            Next
-          </Button>
-        </Flex>
-      </Box>
+        {/* Right box: Package details */}
+        <Box w="50%" borderWidth="1px" borderRadius="lg" p={6}>
+          {selectedPackage ? (
+            <>
+              <Text fontSize="2xl" fontWeight="bold" mb={2}>
+                {selectedPackage.title}
+              </Text>
+              <Divider mb={4} />
+              <Image
+                src={selectedPackage.image_url}
+                alt={selectedPackage.title}
+                boxSize="300px"
+                mb={4}
+                borderRadius="md"
+              />
+              <Divider mb={4} />
+              <Text fontSize="lg" fontWeight="bold" mt={2}>
+                Short Description:
+              </Text>
+              <Text mb={4}>{selectedPackage.short_description}</Text>
 
-      {/* Details Section */}
-      <Box
-        width="40%"
-        p={6}
-        border="1px solid"
-        borderColor="gray.200"
-        rounded="lg"
-        boxShadow="md"
-      >
-        {selectedPackage ? (
-          <>
-            <Text fontSize="2xl" fontWeight="bold" mb={4}>
-              {selectedPackage.title}
-            </Text>
-            <Image
-              src={selectedPackage.image_url}
-              alt={selectedPackage.title}
-              borderRadius="md"
-              mb={4}
-            />
-            <Text fontSize="md" mb={4}>
-              {selectedPackage.long_description}
-            </Text>
-            <Box>
-              <Text fontWeight="bold" mb={2}>
+              <Divider mb={4} />
+              <Text fontSize="lg" fontWeight="bold">
+                Long Description:
+              </Text>
+              <Text mb={4}>{selectedPackage.long_description}</Text>
+
+              <Divider mb={4} />
+              <Text fontSize="lg" fontWeight="bold">
                 Pickup Points:
               </Text>
-              {selectedPackage.pickup_points.map((point:any) => (
-                <Box key={point.ID}>
-                  <Text fontSize="sm">
-                    {point.address}, {point.city}, {point.country}
-                  </Text>
-                  <Text fontSize="xs" color="gray.500">
-                    Postal Code: {point.postal_code}
-                  </Text>
+              {selectedPackage.pickup_points.map((point: any) => (
+                <Box key={point.ID} mb={4} pl={4}>
+                  <Text>Address: {point.address}</Text>
+                  <Text>City: {point.city}</Text>
+                  <Text>Country: {point.country}</Text>
+                  <Text>Postal Code: {point.postal_code}</Text>
                 </Box>
               ))}
-            </Box>
-          </>
-        ) : (
-          <Text>Select a package to see details</Text>
-        )}
-      </Box>
 
-      {/* Create New Package Modal */}
-      <Modal isOpen={isOpen} onClose={onClose}>
+              <Divider mb={4} />
+              {selectedPackage.options.map((option: Option) => (
+                <Box key={option.ID} mb={4}>
+                  <Text fontSize="lg" fontWeight="bold">Quantity:</Text>
+                  <Text>Available Quantity: {option.available_quantity}</Text>
+                  <Text>Allowed Quantity: {option.allowed_quantity}</Text>
+                  <Text fontSize="lg" fontWeight="bold">Accessories:</Text>
+                  {option.accessories.map((acc: Accessory) => (
+                    <Box key={acc.ID} ml={4}>
+                      <Text fontSize="lg" fontWeight="bold"> {acc.ID}</Text>
+                      <Text>- Available Quantity: {acc.available_quantity}</Text>
+                      <Text>- Allowed Quantity: {acc.allowed_quantity}</Text>
+                    </Box>
+                  ))}
+                </Box>
+              ))}
+            </>
+          ) : (
+            <Text>Select a package to view details.</Text>
+          )}
+        </Box>
+      </Flex>
+
+      {/* Modal for creating a new package */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Create New Package</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <FormControl mb={4}>
+            <FormControl>
+              <FormLabel>Archived</FormLabel>
+              <Checkbox
+                name="archived"
+                isChecked={formData.archived}
+                onChange={handleCheckboxChange}
+              >
+                Archived
+              </Checkbox>
+            </FormControl>
+
+            <FormControl mt={4}>
               <FormLabel>Title</FormLabel>
               <Input
                 name="title"
-                value={newPackage.title}
+                value={formData.title}
                 onChange={handleInputChange}
+                placeholder="Enter package title"
               />
             </FormControl>
-            <FormControl mb={4}>
+
+            {/* Product Types Repeater */}
+            {formData.productTypes.map((productType, index) => (
+              <Box key={index} mt={4} borderWidth="1px" borderRadius="lg" p={4}>
+                <FormControl>
+                  <FormLabel>Product Type</FormLabel>
+                  <Select
+                    options={productTypeOptions}
+                    value={productTypeOptions.find(
+                      (option) => option.value === productType.type
+                    )}
+                    onChange={(selectedOption) =>
+                      handleProductTypeChange(index, selectedOption)
+                    }
+                    placeholder="Select product type"
+                    styles={customStyles}
+                  />
+                </FormControl>
+
+                {/* Accessories for the product type */}
+                {availableAccessories[index] && (
+                  <FormControl mt={4}>
+                    <FormLabel>Accessories</FormLabel>
+                    {availableAccessories[index].map((accessory: Accessory) => (
+                      <Box key={accessory.ID} mt={2}>
+                        <Checkbox
+                          isChecked={productType.accessories.includes(accessory.ID)}
+                          onChange={(e) =>
+                            handleAccessorySelection(
+                              index,
+                              accessory.ID,
+                              e.target.checked
+                            )
+                          }
+                        >
+                          {accessory.name}
+                        </Checkbox>
+                      </Box>
+                    ))}
+                  </FormControl>
+                )}
+              </Box>
+            ))}
+
+            {/* Add Product Type Button */}
+            <Button mt={4} colorScheme="teal" onClick={addProductType}>
+              Add Product Type
+            </Button>
+
+            <FormControl mt={4}>
               <FormLabel>Short Description</FormLabel>
               <Textarea
-                name="short_description"
-                value={newPackage.short_description}
+                name="shortDescription"
+                value={formData.shortDescription}
                 onChange={handleInputChange}
+                placeholder="Enter short description"
               />
             </FormControl>
-            <FormControl mb={4}>
+            <FormControl mt={4}>
               <FormLabel>Long Description</FormLabel>
               <Textarea
-                name="long_description"
-                value={newPackage.long_description}
+                name="longDescription"
+                value={formData.longDescription}
                 onChange={handleInputChange}
+                placeholder="Enter long description"
               />
             </FormControl>
-            <FormControl mb={4}>
+            <FormControl mt={4}>
               <FormLabel>Image URL</FormLabel>
               <Input
-                name="image_url"
-                value={newPackage.image_url}
+                name="imageUrl"
+                value={formData.imageUrl}
                 onChange={handleInputChange}
+                placeholder="Enter image URL"
               />
             </FormControl>
-
-            {/* Pickup Points */}
-            {/* <FormControl mb={4}>
-              <FormLabel>Pickup Points</FormLabel>
-              <select
-                name="pickup_points"
-                multiple
-                onChange={(e) => {
-                  const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-                  setNewPackage({ ...newPackage, pickup_points: selectedOptions });
-                }}
-                value={newPackage.pickup_points}
+            <FormControl mt={4}>
+              <FormLabel>Transparent Image</FormLabel>
+              <Checkbox
+                name="transparentImage"
+                isChecked={formData.transparentImage}
+                onChange={handleCheckboxChange}
               >
-                {pickupPoints.map((point) => (
-                  <option key={point.ID} value={point.ID}>
-                    {point.address}
-                  </option>
-                ))}
-              </select>
-            </FormControl> */}
-
-            {/* Archived Toggle */}
-            <FormControl display="flex" alignItems="center" mb={4}>
-              <FormLabel mb={0}>Archived</FormLabel>
-              <Switch
-                isChecked={newPackage.archived}
-                onChange={handleArchivedToggle}
-                ml={2}
-              />
-            </FormControl>
-
-            {/* Transparent Image Checkbox */}
-            <FormControl display="flex" alignItems="center" mb={4}>
-              <FormLabel mb={0}>Transparent Image</FormLabel>
-              <Switch
-                isChecked={newPackage.transparent_image}
-                onChange={handleTransparentImageToggle}
-                ml={2}
-              />
+                Transparent Image
+              </Checkbox>
             </FormControl>
           </ModalBody>
+
           <ModalFooter>
-            <Button colorScheme="blue" onClick={handleAddPackage}>
-              Add Package
-            </Button>
-            <Button ml={3} onClick={onClose}>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
               Cancel
+            </Button>
+            <Button colorScheme="teal" onClick={handleSubmit}>
+              Create Package
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </Flex>
+    </Box>
   );
 };
 
-export default Dashboard;
+export default PackagesTable;
