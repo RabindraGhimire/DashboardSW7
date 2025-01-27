@@ -3,14 +3,11 @@ import {
     Box,
     SimpleGrid,
     Text,
+    Icon,
     Switch,
     Flex,
     Image,
     VStack,
-    Tag,
-    Tooltip,
-    Icon,
-    Fade,
     Collapse,
     Button,
     useDisclosure,
@@ -33,22 +30,45 @@ import {
     Th,
     Td,
     Divider,
+    useToast,
 } from '@chakra-ui/react';
-import { InfoIcon, EditIcon } from '@chakra-ui/icons';
+import { EditIcon } from '@chakra-ui/icons';
 import { FiImage } from 'react-icons/fi';
-import DevelopmentTable from 'views/admin/dataTables/components/DevelopmentTable';
-import tableDataDevelopment from 'views/admin/dataTables/variables/tableDataDevelopment';
 import axios from 'axios';
 
+// Define TypeScript interfaces
+interface ProductType {
+    ID: number;
+    title: string;
+    short_description: string;
+    long_description: string;
+    image_url: string;
+    transparent_image: boolean;
+    CreatedAt: string;
+    UpdatedAt: string;
+}
+
+interface ProductInstance {
+    ID: number;
+    title: string;
+    short_description: string;
+    long_description: string;
+    image_url: string;
+    transparent_image: boolean;
+    CreatedAt: string;
+    UpdatedAt: string;
+}
+
 export default function Settings() {
-    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [selectedItem, setSelectedItem] = useState<ProductType | ProductInstance | null>(null);
     const [viewProductTypes, setViewProductTypes] = useState<boolean>(false);
     const [showFullDescription, setShowFullDescription] = useState<boolean>(false);
-    const [productTypes, setProductTypes] = useState<any[]>([]);
+    const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+    const [productInstances, setProductInstances] = useState<ProductInstance[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isAddModalOpen, onOpen: onOpenAddModal, onClose: onCloseAddModal } = useDisclosure();
-    const [editFormData, setEditFormData] = useState<any>({});
+    const [editFormData, setEditFormData] = useState<ProductType | ProductInstance | null>(null);
     const [addFormData, setAddFormData] = useState({
         title: '',
         short_description: '',
@@ -61,37 +81,50 @@ export default function Settings() {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const itemsPerPage = 10;
 
-    // Fetch product types when the view switches to product types
-    useEffect(() => {
-        if (viewProductTypes) {
-            fetchProductTypes();
-        } else {
-            setProductTypes([]);
-        }
-    }, [viewProductTypes]);
+    const toast = useToast();
 
-    // Fetch product types from the API
-    const fetchProductTypes = () => {
+    // Fetch product instances or types based on view
+    useEffect(() => {
         setIsLoading(true);
+        const url = viewProductTypes
+            ? 'http://127.0.0.1:3000/v1/producttype'
+            : 'http://127.0.0.1:3000/v1/productinstance';
+
         axios
-            .get('http://127.0.0.1:3000/v1/producttype')
+            .get(url)
             .then((response) => {
                 if (response.data.code === 200) {
-                    setProductTypes(response.data.data);
+                    if (viewProductTypes) {
+                        setProductTypes(response.data.data);
+                    } else {
+                        setProductInstances(response.data.data);
+                    }
                 } else {
-                    console.error('Failed to fetch product types');
+                    toast({
+                        title: 'Error',
+                        description: 'Failed to fetch data',
+                        status: 'error',
+                        duration: 5000,
+                        isClosable: true,
+                    });
                 }
             })
             .catch((error) => {
-                console.error('Error fetching product types:', error);
+                toast({
+                    title: 'Error',
+                    description: 'Error fetching data',
+                    status: 'error',
+                    duration: 5000,
+                    isClosable: true,
+                });
             })
             .finally(() => {
                 setIsLoading(false);
             });
-    };
+    }, [viewProductTypes, toast]);
 
     // Handle item click (product or product type)
-    const handleItemClick = (item: any) => {
+    const handleItemClick = (item: ProductType | ProductInstance) => {
         setSelectedItem(item);
         setShowFullDescription(false);
     };
@@ -108,31 +141,46 @@ export default function Settings() {
         setEditFormData({
             ...editFormData,
             [name]: value,
-        });
+        } as ProductType | ProductInstance);
     };
 
     // Save changes in the edit modal
-    const handleSaveChanges = () => {
+    const handleSaveChanges = async () => {
+        if (!editFormData) return;
+
         setIsLoading(true);
-        axios
-            .put(`http://127.0.0.1:3000/v1/product_type/${editFormData.ID}`, editFormData)
-            .then((response) => {
-                if (response.data.code === 200) {
-                    setSelectedItem(editFormData);
+        const url = viewProductTypes
+            ? `http://127.0.0.1:3000/v1/producttype/${editFormData.ID}`
+            : `http://127.0.0.1:3000/v1/productinstance/${editFormData.ID}`;
+
+        try {
+            const response = await axios.put(url, editFormData);
+            if (response.data.code === 200) {
+                setSelectedItem(editFormData);
+                if (viewProductTypes) {
                     setProductTypes((prev) =>
                         prev.map((item) => (item.ID === editFormData.ID ? editFormData : item))
                     );
-                    onClose();
                 } else {
-                    console.error('Failed to update product type');
+                    setProductInstances((prev) =>
+                        prev.map((item) => (item.ID === editFormData.ID ? editFormData : item))
+                    );
                 }
-            })
-            .catch((error) => {
-                console.error('Error updating product type:', error);
-            })
-            .finally(() => {
-                setIsLoading(false);
+                onClose();
+            } else {
+                throw new Error('Failed to update item');
+            }
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Error updating item',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
             });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Handle input changes in the add modal
@@ -152,103 +200,65 @@ export default function Settings() {
         });
     };
 
-    // Add a new product type
-    const handleAddProductType = () => {
+    // Add a new item (product or product type)
+    const handleAddItem = async () => {
         setIsLoading(true);
+        const url = viewProductTypes
+            ? 'http://127.0.0.1:3000/v1/producttype'
+            : 'http://127.0.0.1:3000/v1/productinstance';
 
-        // Optimistically update the state
-        const newItem = {
-            ...addFormData,
-            ID: Date.now(), // Temporary ID (replace with actual ID from the API response)
-            CreatedAt: new Date().toISOString(),
-            UpdatedAt: new Date().toISOString(),
-        };
-        setProductTypes((prev) => [...prev, newItem]);
-        setSelectedItem(newItem);
-
-        // Make the API call
-        axios
-            .post('http://127.0.0.1:3000/v1/producttype', addFormData)
-            .then((response) => {
-                console.log('API Response:', response);
-                if (response.status === 201) {
-                    const updatedItem = response.data.data || response.data;
-                    setProductTypes((prev) =>
-                        prev.map((item) => (item.ID === newItem.ID ? updatedItem : item))
-                    );
-                    fetchProductTypes();
-                    setSelectedItem(updatedItem);
-                    onCloseAddModal(); // Close the modal after successful API call
-                    setAddFormData({ // Reset the form data
-                        title: '',
-                        short_description: '',
-                        long_description: '',
-                        image_url: '',
-                        transparent_image: false,
-                    });
+        try {
+            const response = await axios.post(url, addFormData);
+            if (response.status === 201) {
+                const newItem = response.data.data || response.data;
+                if (viewProductTypes) {
+                    setProductTypes((prev) => [...prev, newItem]);
                 } else {
-                    console.error('Failed to add product type: Invalid response', response);
+                    setProductInstances((prev) => [...prev, newItem]);
                 }
-            })
-            .catch((error) => {
-                console.error('Error adding product type:', error);
-                // Revert the optimistic update if the API call fails
-                setProductTypes((prev) => prev.filter((item) => item.ID !== newItem.ID));
-                setSelectedItem(null);
-            })
-            .finally(() => {
-                setIsLoading(false);
+                setSelectedItem(newItem);
+                onCloseAddModal();
+                setAddFormData({
+                    title: '',
+                    short_description: '',
+                    long_description: '',
+                    image_url: '',
+                    transparent_image: false,
+                });
+            } else {
+                throw new Error('Failed to add item');
+            }
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Error adding item',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
             });
-    };
-
-    // Add a new product
-    const handleAddProduct = () => {
-        setIsLoading(true);
-
-        // Make the API call
-        axios
-            .post('http://127.0.0.1:3000/v1/product', addFormData)
-            .then((response) => {
-                console.log('API Response:', response);
-                if (response.status === 201 && response.data.data) {
-                    const newItem = response.data.data;
-                    setAddFormData({
-                        title: '',
-                        short_description: '',
-                        long_description: '',
-                        image_url: '',
-                        transparent_image: false,
-                    });
-                    setSelectedItem(newItem);
-                    onCloseAddModal(); // Close the modal after successful API call
-                } else {
-                    console.error('Failed to add product: Invalid response');
-                }
-            })
-            .catch((error) => {
-                console.error('Error adding product:', error);
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Pagination logic
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = productTypes.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = viewProductTypes
+        ? productTypes.slice(indexOfFirstItem, indexOfLastItem)
+        : productInstances.slice(indexOfFirstItem, indexOfLastItem);
 
     // Change page
     const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
     // Base box styling for containers
     const boxStyles = {
-        border: "1px solid",
-        borderColor: "gray.200",
-        p: "20px",
-        borderRadius: "8px",
-        boxShadow: "md",
-        bg: "white",
+        border: '1px solid',
+        borderColor: 'gray.200',
+        p: '20px',
+        borderRadius: '8px',
+        boxShadow: 'md',
+        bg: 'white',
     };
 
     return (
@@ -266,7 +276,6 @@ export default function Settings() {
                             setSelectedItem(null);
                         }}
                     />
-                    {/* Dynamic Add Button */}
                     <Button colorScheme="blue" ml="10px" onClick={onOpenAddModal}>
                         {viewProductTypes ? 'Add Product Type' : 'Add Product'}
                     </Button>
@@ -276,37 +285,38 @@ export default function Settings() {
             <SimpleGrid columns={{ base: 1, lg: 2 }} spacing="20px">
                 {/* Left Box with Table */}
                 <Box {...boxStyles}>
-                    {viewProductTypes ? (
-                        isLoading ? (
-                            <Flex justify="center" align="center" h="200px">
-                                <Spinner size="xl" />
-                            </Flex>
-                        ) : (
-                            <>
-                                <Table variant="simple">
-                                    <Thead>
-                                        <Tr>
-                                            <Th>Title</Th>
-                                            <Th>Actions</Th>
+                    {isLoading ? (
+                        <Flex justify="center" align="center" h="200px">
+                            <Spinner size="xl" />
+                        </Flex>
+                    ) : (
+                        <>
+                            <Table variant="simple">
+                                <Thead>
+                                    <Tr>
+                                        <Th>Title</Th>
+                                        <Th>Actions</Th>
+                                    </Tr>
+                                </Thead>
+                                <Divider orientation="horizontal" borderColor="gray.300" />
+                                <Tbody>
+                                    {currentItems.map((item, index) => (
+                                        <Tr key={item?.ID || index} onClick={() => handleItemClick(item)}>
+                                            <Td>{item?.title || 'N/A'}</Td>
+                                            <Td>
+                                                <Button size="sm" onClick={() => handleItemClick(item)}>
+                                                    View Details
+                                                </Button>
+                                            </Td>
                                         </Tr>
-                                    </Thead>
-                                    <Divider orientation="horizontal" borderColor="gray.300" />
-                                    <Tbody>
-                                        {currentItems.map((item, index) => (
-                                            <Tr key={item?.ID || index} onClick={() => handleItemClick(item)}>
-                                                <Td>{item?.title || 'N/A'}</Td>
-                                                <Td>
-                                                    <Button size="sm" onClick={() => handleItemClick(item)}>
-                                                        View Details
-                                                    </Button>
-                                                </Td>
-                                            </Tr>
-                                        ))}
-                                    </Tbody>
-                                </Table>
-                                {/* Pagination */}
-                                <Flex justify="center" mt="20px">
-                                    {Array.from({ length: Math.ceil(productTypes.length / itemsPerPage) }, (_, i) => (
+                                    ))}
+                                </Tbody>
+                            </Table>
+                            {/* Pagination */}
+                            <Flex justify="center" mt="20px">
+                                {Array.from(
+                                    { length: Math.ceil((viewProductTypes ? productTypes : productInstances).length / itemsPerPage) },
+                                    (_, i) => (
                                         <Button
                                             key={i + 1}
                                             variant={currentPage === i + 1 ? 'solid' : 'outline'}
@@ -316,15 +326,10 @@ export default function Settings() {
                                         >
                                             {i + 1}
                                         </Button>
-                                    ))}
-                                </Flex>
-                            </>
-                        )
-                    ) : (
-                        <DevelopmentTable
-                            tableData={tableDataDevelopment}
-                            onProductClick={handleItemClick}
-                        />
+                                    )
+                                )}
+                            </Flex>
+                        </>
                     )}
                 </Box>
 
@@ -335,80 +340,79 @@ export default function Settings() {
                     _hover={{ boxShadow: 'xl', transform: 'scale(1.02)', transition: '0.3s ease' }}
                 >
                     {selectedItem ? (
-                        <Fade in={!!selectedItem}>
-                            <VStack spacing={4}>
-                                <Flex justify="flex-end" w="full">
-                                    <Icon
-                                        as={EditIcon}
-                                        boxSize="5"
-                                        color="gray.500"
-                                        cursor="pointer"
-                                        _hover={{ color: 'blue.500' }}
-                                        onClick={handleEditClick}
-                                    />
+                        <VStack spacing={4}>
+                            <Flex justify="flex-end" w="full">
+                                <Icon
+                                    as={EditIcon}
+                                    boxSize="5"
+                                    color="gray.500"
+                                    cursor="pointer"
+                                    _hover={{ color: 'blue.500' }}
+                                    onClick={handleEditClick}
+                                    aria-label="Edit item"
+                                />
+                            </Flex>
+
+                            {selectedItem.image_url ? (
+                                <Image
+                                    src={selectedItem.image_url}
+                                    alt={selectedItem.title}
+                                    borderRadius="md"
+                                    boxShadow="md"
+                                    maxW="200px"
+                                    maxH="200px"
+                                    objectFit="cover"
+                                    _hover={{ transform: 'scale(1.05)', transition: '0.2s ease' }}
+                                />
+                            ) : (
+                                <Flex
+                                    align="center"
+                                    justify="center"
+                                    w="200px"
+                                    h="200px"
+                                    bg="gray.100"
+                                    borderRadius="md"
+                                    boxShadow="md"
+                                >
+                                    <Icon as={FiImage} boxSize="8" color="gray.400" />
                                 </Flex>
+                            )}
 
-                                {selectedItem.image_url ? (
-                                    <Image
-                                        src={selectedItem.image_url}
-                                        alt={selectedItem.title}
-                                        borderRadius="md"
-                                        boxShadow="md"
-                                        maxW="200px"
-                                        maxH="200px"
-                                        objectFit="cover"
-                                        _hover={{ transform: 'scale(1.05)', transition: '0.2s ease' }}
-                                    />
-                                ) : (
-                                    <Flex
-                                        align="center"
-                                        justify="center"
-                                        w="200px"
-                                        h="200px"
-                                        bg="gray.100"
-                                        borderRadius="md"
-                                        boxShadow="md"
-                                    >
-                                        <Icon as={FiImage} boxSize="8" color="gray.400" />
-                                    </Flex>
-                                )}
+                            <Text fontSize="lg" fontWeight="bold">
+                                {selectedItem?.title || 'No title available'}
+                            </Text>
 
-                                <Text fontSize="lg" fontWeight="bold">
-                                    {selectedItem?.title || 'No title available'}
+                            <Text color="gray.600" fontSize="md">
+                                {selectedItem.short_description || 'No short description available.'}
+                            </Text>
+
+                            <Box textAlign="left" w="full">
+                                <Collapse startingHeight={60} in={showFullDescription}>
+                                    <Text color="gray.600" fontSize="md">
+                                        {selectedItem.long_description || 'No long description available.'}
+                                    </Text>
+                                </Collapse>
+                                <Button
+                                    size="sm"
+                                    mt="10px"
+                                    onClick={() => setShowFullDescription(!showFullDescription)}
+                                >
+                                    {showFullDescription ? 'Show Less' : 'Read More'}
+                                </Button>
+                            </Box>
+
+                            <VStack spacing={2} align="start" w="full">
+                                <Text fontSize="sm" color="gray.500">
+                                    <strong>Created At:</strong> {new Date(selectedItem.CreatedAt).toLocaleString()}
                                 </Text>
-
-                                <Text color="gray.600" fontSize="md">
-                                    {selectedItem.short_description || 'No short description available.'}
+                                <Text fontSize="sm" color="gray.500">
+                                    <strong>Updated At:</strong> {new Date(selectedItem.UpdatedAt).toLocaleString()}
                                 </Text>
-
-                                <Box textAlign="left" w="full">
-                                    <Collapse startingHeight={60} in={showFullDescription}>
-                                        <Text color="gray.600" fontSize="md">
-                                            {selectedItem.long_description || 'No long description available.'}
-                                        </Text>
-                                    </Collapse>
-                                    <Button
-                                        size="sm"
-                                        mt="10px"
-                                        onClick={() => setShowFullDescription(!showFullDescription)}
-                                    >
-                                        {showFullDescription ? 'Show Less' : 'Read More'}
-                                    </Button>
-                                </Box>
-
-                                <VStack spacing={2} align="start" w="full">
-                                    <Text fontSize="sm" color="gray.500">
-                                        <strong>Created At:</strong> {new Date(selectedItem.CreatedAt).toLocaleString()}
-                                    </Text>
-                                    <Text fontSize="sm" color="gray.500">
-                                        <strong>Updated At:</strong> {new Date(selectedItem.UpdatedAt).toLocaleString()}
-                                    </Text>
-                                    <Text fontSize="sm" color="gray.500">
-                                        <strong>Transparent Image:</strong> {selectedItem.transparent_image ? 'Yes' : 'No'}
-                                    </Text>
-                                </VStack>
+                                <Text fontSize="sm" color="gray.500">
+                                    <strong>Transparent Image:</strong> {selectedItem.transparent_image ? 'Yes' : 'No'}
+                                </Text>
                             </VStack>
-                        </Fade>
+                        </VStack>
                     ) : (
                         <Text color="gray.500">
                             Select a {viewProductTypes ? 'product type' : 'product'} to see its details here.
@@ -428,7 +432,7 @@ export default function Settings() {
                             <FormLabel>Title</FormLabel>
                             <Input
                                 name="title"
-                                value={editFormData.title || ''}
+                                value={editFormData?.title || ''}
                                 onChange={handleInputChange}
                             />
                         </FormControl>
@@ -436,7 +440,7 @@ export default function Settings() {
                             <FormLabel>Short Description</FormLabel>
                             <Input
                                 name="short_description"
-                                value={editFormData.short_description || ''}
+                                value={editFormData?.short_description || ''}
                                 onChange={handleInputChange}
                             />
                         </FormControl>
@@ -444,7 +448,7 @@ export default function Settings() {
                             <FormLabel>Long Description</FormLabel>
                             <Textarea
                                 name="long_description"
-                                value={editFormData.long_description || ''}
+                                value={editFormData?.long_description || ''}
                                 onChange={handleInputChange}
                             />
                         </FormControl>
@@ -452,7 +456,7 @@ export default function Settings() {
                             <FormLabel>Image URL</FormLabel>
                             <Input
                                 name="image_url"
-                                value={editFormData.image_url || ''}
+                                value={editFormData?.image_url || ''}
                                 onChange={handleInputChange}
                             />
                         </FormControl>
@@ -460,15 +464,15 @@ export default function Settings() {
                             <FormLabel>Transparent Image</FormLabel>
                             <Flex align="center">
                                 <Text mr="10px" fontSize="sm" color="gray.500">
-                                    {editFormData.transparent_image ? 'Yes' : 'No'}
+                                    {editFormData?.transparent_image ? 'Yes' : 'No'}
                                 </Text>
                                 <Switch
-                                    isChecked={editFormData.transparent_image}
+                                    isChecked={editFormData?.transparent_image || false}
                                     onChange={() =>
                                         setEditFormData({
                                             ...editFormData,
-                                            transparent_image: !editFormData.transparent_image,
-                                        })
+                                            transparent_image: !editFormData?.transparent_image,
+                                        } as ProductType | ProductInstance)
                                     }
                                     colorScheme="green"
                                 />
@@ -540,7 +544,7 @@ export default function Settings() {
                         </FormControl>
                     </ModalBody>
                     <ModalFooter>
-                        <Button colorScheme="blue" mr={3} onClick={viewProductTypes ? handleAddProductType : handleAddProduct}>
+                        <Button colorScheme="blue" mr={3} onClick={handleAddItem}>
                             Add {viewProductTypes ? 'Product Type' : 'Product'}
                         </Button>
                         <Button variant="ghost" onClick={onCloseAddModal}>
