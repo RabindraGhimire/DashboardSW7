@@ -268,7 +268,7 @@ const PackagesTable = () => {
   return (
     <Box p={4} pt={20}>
       <Flex justifyContent="space-between" mb={4}>
-        <Button colorScheme="teal" onClick={() => setIsModalOpen(true)}>
+        <Button colorScheme="blue" onClick={() => setIsModalOpen(true)}>
           Create New Package
         </Button>
       </Flex>
@@ -305,10 +305,97 @@ const PackagesTable = () => {
           </TableContainer>
         </Box>
 
-        {/* Right package details remain same */}
+        {/* Right package details */}
         <Box w="50%" borderWidth="1px" borderRadius="lg" p={6} boxShadow="md">
-          {/* ... existing package details view ... */}
-        </Box>
+  {selectedPackage ? (
+    <>
+      <Text fontSize="xl" fontWeight="bold" mb={4}>
+        {selectedPackage.title}
+      </Text>
+      <Text mb={2}>
+        <strong>Short Description:</strong> {selectedPackage.short_description}
+      </Text>
+      <Text mb={2}>
+        <strong>Long Description:</strong> {selectedPackage.long_description}
+      </Text>
+      <Text mb={2}>
+        <strong>Image:</strong>
+      </Text>
+      {selectedPackage.image_url ? (
+        <Image
+          src={selectedPackage.image_url}
+          alt={selectedPackage.title}
+          boxSize="200px"
+          objectFit="cover"
+          borderRadius="md"
+          mb={2}
+        />
+      ) : (
+        <Text>No image available</Text>
+      )}
+      <Text mb={2}>
+        <strong>Transparent Image:</strong>{" "}
+        {selectedPackage.transparent_image ? "Yes" : "No"}
+      </Text>
+      <Text mb={2}>
+        <strong>Pickup Points:</strong>
+      </Text>
+      {selectedPackage.pickup_points && selectedPackage.pickup_points.length > 0 ? (
+        selectedPackage.pickup_points.map((point: any, index: number) => (
+          <Box key={index} mb={4} p={4} borderWidth="1px" borderRadius="lg">
+            <Text>
+              <strong>Address:</strong> {point.address}
+            </Text>
+            <Text>
+              <strong>City:</strong> {point.city}
+            </Text>
+            <Text>
+              <strong>Country:</strong> {point.country}
+            </Text>
+          </Box>
+        ))
+      ) : (
+        <Text>No pickup points available</Text>
+      )}
+      <Text mb={2}>
+        <strong>Features:</strong>{" "}
+        {selectedPackage.features
+          ? selectedPackage.features.join(", ")
+          : "N/A"}
+      </Text>
+      <Divider my={4} />
+      <Text fontSize="lg" fontWeight="bold" mb={4}>
+        Options
+      </Text>
+      {selectedPackage.options &&
+        selectedPackage.options.map((option: any, index: number) => (
+          <Box key={index} mb={4} p={4} borderWidth="1px" borderRadius="lg">
+            <Text>
+              <strong>Product Type ID:</strong> {option.ID}
+            </Text>
+            <Text>
+              <strong>Buy Price:</strong> {option.buy_price}
+            </Text>
+            <Text>
+              <strong>Allowed Quantity:</strong> {option.allowed_quantity}
+            </Text>
+            <Text>
+              <strong>Rent Prices:</strong>
+            </Text>
+            {option.rent_prices &&
+              option.rent_prices.map((rentPrice: any, priceIndex: number) => (
+                <Text key={priceIndex} ml={4}>
+                  {rentPrice.hours} hours: ${rentPrice.price}
+                </Text>
+              ))}
+          </Box>
+        ))}
+    </>
+  ) : (
+    <Text>Select a package to view details</Text>
+  )}
+</Box>
+
       </Flex>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl">
