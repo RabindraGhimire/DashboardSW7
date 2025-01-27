@@ -177,14 +177,14 @@ import {
             Product Types
           </Text>
           <Flex align="center">
-            <Button
+            {/* <Button
               size="sm"
               colorScheme="blue"
               onClick={() => setIsModalOpen(true)} // Open modal on button click
               mr="10px"
             >
               Add Product Type
-            </Button>
+            </Button> */}
           </Flex>
         </Flex>
   

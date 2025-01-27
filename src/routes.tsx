@@ -6,6 +6,8 @@ import {
   MdLock,
   MdOutlineShoppingCart,
   MdGroup,
+  MdOutlinePropaneTank,
+  MdProductionQuantityLimits,
 } from 'react-icons/md';
 
 // Admin Components
@@ -58,7 +60,7 @@ const routes = [
     name: 'Products',
     layout: '/admin',
     path: '/products',
-    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={MdProductionQuantityLimits} width="20px" height="20px" color="inherit" />,
     component: <DataTables />,
     isPrivate: true,
   },
@@ -66,7 +68,7 @@ const routes = [
     name: 'Packages',
     layout: '/admin',
     path: '/packages',
-    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={MdOutlinePropaneTank} width="20px" height="20px" color="inherit" />,
     component: <Packages />,
     isPrivate: false,
   },

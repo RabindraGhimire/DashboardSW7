@@ -109,14 +109,14 @@ import {
 			Products
 		  </Text>
 		  <Flex align="center">
-			<Button
+			{/* <Button
 			  size="sm"
 			  colorScheme="blue"
 			  onClick={() => setIsModalOpen(true)} // Open modal on button click
 			  mr="10px"
 			>
 			  Add Product
-			</Button>
+			</Button> */}
 		  </Flex>
 		</Flex>
   
